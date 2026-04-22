@@ -27,7 +27,7 @@ IP_REGEX = re.compile(
     r"^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$"
 )
 DOMAIN_REGEX = re.compile(
-    r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$"
+    r"^[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]?(?:\.[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]?)*\.[a-zA-Z]{2,}$"
 )
 MD5_REGEX = re.compile(r"^[a-fA-F0-9]{32}$")
 SHA256_REGEX = re.compile(r"^[a-fA-F0-9]{64}$")

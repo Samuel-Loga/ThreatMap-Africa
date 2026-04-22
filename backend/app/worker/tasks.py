@@ -59,6 +59,7 @@ def enrich_shodan(ip: str) -> dict:
 
 def enrich_abuseipdb(ip: str) -> dict:
     if not settings.ABUSEIPDB_API_KEY:
+        logger.debug("Skipping AbuseIPDB enrichment: ABUSEIPDB_API_KEY not configured")
         return {}
     try:
         with httpx.Client(timeout=10) as client:
@@ -76,6 +77,7 @@ def enrich_abuseipdb(ip: str) -> dict:
 
 def enrich_virustotal(ioc: str, itype: str) -> dict:
     if not settings.VIRUSTOTAL_API_KEY:
+        logger.debug("Skipping VirusTotal enrichment: VIRUSTOTAL_API_KEY not configured")
         return {}
     try:
         with httpx.Client(timeout=15) as client:

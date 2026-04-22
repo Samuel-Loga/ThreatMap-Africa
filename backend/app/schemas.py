@@ -26,12 +26,35 @@ ATTACK_CATEGORIES = [
 IP_REGEX = re.compile(
     r"^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$"
 )
-DOMAIN_REGEX = re.compile(
-    r"^[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]?(?:\.[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]?)*\.[a-zA-Z]{2,}$"
-)
+DOMAIN_REGEX = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]?(?:\.[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]?)*\.[a-zA-Z]{2,}$")
 MD5_REGEX = re.compile(r"^[a-fA-F0-9]{32}$")
 SHA256_REGEX = re.compile(r"^[a-fA-F0-9]{64}$")
 EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+_LABEL_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]?$|^[a-zA-Z0-9]$")
+_TLD_RE = re.compile(r"^[a-zA-Z]{2,}$")
+
+
+def is_valid_domain(value: str) -> bool:
+    """Validate a domain using split-based approach to avoid regex ReDoS."""
+    parts = value.split(".")
+    if len(parts) < 2:
+        return False
+    tld = parts[-1]
+    if not _TLD_RE.match(tld):
+        return False
+    return all(_LABEL_RE.match(label) for label in parts[:-1] if label)
+
+
+def is_valid_email(value: str) -> bool:
+    """Validate an email using split-based approach to avoid regex ReDoS."""
+    at_parts = value.split("@")
+    if len(at_parts) != 2:
+        return False
+    local, domain = at_parts
+    if not local or len(local) > 254:
+        return False
+    return is_valid_domain(domain)
 
 
 class UserCreate(BaseModel):
@@ -118,7 +141,7 @@ class IndicatorCreate(BaseModel):
         v = self.value
         if t == "ip" and not IP_REGEX.match(v):
             raise ValueError("Invalid IP address format")
-        elif t == "domain" and not DOMAIN_REGEX.match(v):
+        elif t == "domain" and not is_valid_domain(v):
             raise ValueError("Invalid domain format")
         elif t == "url":
             if not (v.startswith("http://") or v.startswith("https://")):
@@ -127,7 +150,7 @@ class IndicatorCreate(BaseModel):
             raise ValueError("Invalid MD5 hash format (must be 32 hex chars)")
         elif t == "hash_sha256" and not SHA256_REGEX.match(v):
             raise ValueError("Invalid SHA256 hash format (must be 64 hex chars)")
-        elif t == "email" and not EMAIL_REGEX.match(v):
+        elif t == "email" and not is_valid_email(v):
             raise ValueError("Invalid email format")
 
 

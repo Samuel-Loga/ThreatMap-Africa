@@ -58,7 +58,9 @@ export default function ThreatFeed() {
             )
           )
         }
-      } catch {}
+      } catch (err) {
+        console.error('WebSocket message parse error:', err)
+      }
     }
 
     return () => ws.close()

@@ -22,7 +22,11 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
-    indicators: Mapped[list["Indicator"]] = relationship("Indicator", back_populates="submitter")
+    indicators: Mapped[list["Indicator"]] = relationship(
+        "Indicator",
+        back_populates="submitter",
+        lazy="selectin",
+    )
 
 
 class Indicator(Base):
@@ -45,8 +49,12 @@ class Indicator(Base):
     status: Mapped[str] = mapped_column(String(50), default="pending", nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
-    submitter: Mapped["User"] = relationship("User", back_populates="indicators")
-    enrichment_results: Mapped[list["EnrichmentResult"]] = relationship("EnrichmentResult", back_populates="indicator")
+    submitter: Mapped["User"] = relationship("User", back_populates="indicators", lazy="selectin")
+    enrichment_results: Mapped[list["EnrichmentResult"]] = relationship(
+        "EnrichmentResult",
+        back_populates="indicator",
+        lazy="selectin",
+    )
 
 
 class EnrichmentResult(Base):
@@ -61,4 +69,8 @@ class EnrichmentResult(Base):
     asn: Mapped[str] = mapped_column(String(200), default="", nullable=False)
     enriched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
-    indicator: Mapped["Indicator"] = relationship("Indicator", back_populates="enrichment_results")
+    indicator: Mapped["Indicator"] = relationship(
+        "Indicator",
+        back_populates="enrichment_results",
+        lazy="selectin",
+    )

@@ -4,6 +4,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func
+from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.models import Indicator, User
 from app.schemas import IndicatorCreate, IndicatorOut
@@ -47,7 +48,10 @@ async def create_indicator(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    indicator_in.validate_value_format()
+    try:
+        indicator_in.validate_value_format()
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     if indicator_in.indicator_type == "ip" and is_private_ip(indicator_in.value):
         raise HTTPException(status_code=400, detail="Private IP addresses are not allowed")
@@ -66,7 +70,9 @@ async def create_indicator(
         raise HTTPException(status_code=429, detail="Rate limit: 100 submissions per hour")
 
     now = datetime.now(timezone.utc)
+    indicator_id = uuid.uuid4()
     indicator = Indicator(
+        id=indicator_id,
         indicator_type=indicator_in.indicator_type,
         value=indicator_in.value,
         tlp=indicator_in.tlp,
@@ -78,7 +84,7 @@ async def create_indicator(
         first_seen=indicator_in.first_seen or now,
         last_seen=indicator_in.last_seen or now,
         submitted_by=current_user.id,
-        stix_id=f"indicator--{uuid.uuid4()}",
+        stix_id=f"indicator--{indicator_id}",
         status="pending",
         enrichment_data={},
     )
@@ -99,12 +105,12 @@ async def list_indicators(
     indicator_type: Optional[str] = Query(None),
     tlp: Optional[str] = Query(None),
     since: Optional[datetime] = Query(None),
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    stmt = select(Indicator)
+    stmt = select(Indicator).options(selectinload(Indicator.enrichment_results))
     filters = []
     if indicator_type:
         filters.append(Indicator.indicator_type == indicator_type)
@@ -132,7 +138,11 @@ async def get_indicator(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    result = await db.execute(select(Indicator).where(Indicator.id == indicator_id))
+    result = await db.execute(
+        select(Indicator)
+        .options(selectinload(Indicator.enrichment_results))
+        .where(Indicator.id == indicator_id)
+    )
     indicator = result.scalar_one_or_none()
     if not indicator:
         raise HTTPException(status_code=404, detail="Indicator not found")

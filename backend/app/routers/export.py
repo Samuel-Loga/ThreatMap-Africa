@@ -18,6 +18,7 @@ ThreatMapExtension = stix2.properties.ExtensionsProperty
 
 def indicator_to_stix(indicator: Indicator) -> dict:
     ext = {
+        "extension_type": "property-extension",
         "tlp": indicator.tlp,
         "confidence": indicator.confidence,
         "country_codes": indicator.country_codes,
@@ -104,6 +105,7 @@ async def export_stix(
     bundle = {
         "type": "bundle",
         "id": f"bundle--{uuid.uuid4()}",
+        "spec_version": "2.1",
         "objects": objects,
     }
     return JSONResponse(content=bundle, media_type="application/json")

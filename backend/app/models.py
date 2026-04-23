@@ -25,7 +25,7 @@ class User(Base):
     indicators: Mapped[list["Indicator"]] = relationship(
         "Indicator",
         back_populates="submitter",
-        lazy="selectin",
+        lazy="noload",
     )
 
 

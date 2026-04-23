@@ -87,12 +87,13 @@ async def export_stix(
     result = await db.execute(stmt)
     indicators = result.scalars().all()
 
+    now = datetime.now(timezone.utc).isoformat()
     ext_def = {
         "type": "extension-definition",
         "spec_version": "2.1",
         "id": "extension-definition--d4d2c6b4-7f5a-4d6b-8e8a-1e2f3a4b5c6d",
-        "created": "2024-01-01T00:00:00Z",
-        "modified": "2024-01-01T00:00:00Z",
+        "created": now,
+        "modified": now,
         "name": "ThreatMap Africa Extension",
         "description": "Custom extension for African threat intelligence context",
         "schema": "https://threatmap.africa/extensions/v1",

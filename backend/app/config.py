@@ -12,15 +12,16 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost,http://localhost:3000,http://localhost:5173"
     ABUSEIPDB_API_KEY: Optional[str] = None
     VIRUSTOTAL_API_KEY: Optional[str] = None
-    MINIO_ENDPOINT: str = "minio:9000"
-    MINIO_ACCESS_KEY: str = "minioadmin"
-    MINIO_SECRET_KEY: str = "minioadmin"
+    SUPABASE_URL: str = "https://your-project.supabase.co"
+    SUPABASE_ANON_KEY: str = "your-anon-key"
+    SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
+    SUPABASE_STORAGE_BUCKET: str = "threatmap"
 
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
-    model_config = {"env_file": ".env", "extra": "ignore"}
+    model_config = {"env_file": [".env", ".env.local"], "extra": "ignore"}
 
 
 settings = Settings()

@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost,http://localhost:3000,http://localhost:5173"
     ABUSEIPDB_API_KEY: Optional[str] = None
     VIRUSTOTAL_API_KEY: Optional[str] = None
-    SUPABASE_URL: str = "https://your-project.supabase.co"
-    SUPABASE_ANON_KEY: str = "your-anon-key"
+    SUPABASE_URL: Optional[str] = None
+    SUPABASE_ANON_KEY: Optional[str] = None
     SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
     SUPABASE_STORAGE_BUCKET: str = "threatmap"
 

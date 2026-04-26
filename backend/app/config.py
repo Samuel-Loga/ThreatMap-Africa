@@ -12,6 +12,12 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost,http://localhost:3000,http://localhost:5173"
     ABUSEIPDB_API_KEY: Optional[str] = None
     VIRUSTOTAL_API_KEY: Optional[str] = None
+    GREYNOISE_API_KEY: Optional[str] = None
+    URLSCAN_API_KEY: Optional[str] = None
+    OTX_API_KEY: Optional[str] = None
+    SECURITYTRAILS_API_KEY: Optional[str] = None
+    EMAILREP_API_KEY: Optional[str] = None
+    MALWAREBAZAAR_API_KEY: Optional[str] = None  # Often optional for basic lookups
     SUPABASE_URL: Optional[str] = None
     SUPABASE_ANON_KEY: Optional[str] = None
     SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None

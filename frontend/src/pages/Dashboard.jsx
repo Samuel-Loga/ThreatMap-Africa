@@ -44,7 +44,7 @@ export default function Dashboard() {
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
 
   const todayCount = indicators.filter((i) => new Date(i.created_at) >= today).length
-  const criticalCount = indicators.filter((i) => i.confidence >= 70).length
+  const criticalCount = indicators.filter((i) => i.confidence >= 70 || i.severity === 'Critical').length
 
   const countryCounts = {}
   const categoryCounts = {}

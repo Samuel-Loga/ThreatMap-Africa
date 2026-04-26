@@ -81,6 +81,7 @@ export default function IndicatorDetail() {
       <Section title="Details">
         <Field label="ID" value={indicator.id} />
         <Field label="Type" value={indicator.indicator_type} />
+        <Field label="Severity" value={indicator.severity} />
         <Field label="Confidence" value={`${indicator.confidence}%`} />
         <Field label="Countries" value={(indicator.country_codes || []).join(', ') || '—'} />
         <Field label="Sectors" value={(indicator.sectors || []).join(', ') || '—'} />

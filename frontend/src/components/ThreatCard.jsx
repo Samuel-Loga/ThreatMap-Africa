@@ -28,8 +28,15 @@ function ConfidenceBar({ value }) {
   )
 }
 
+const SEVERITY_COLORS = {
+  Low: 'bg-blue-900/40 text-blue-300 border-blue-800',
+  Medium: 'bg-yellow-900/40 text-yellow-300 border-yellow-800',
+  High: 'bg-orange-900/40 text-orange-300 border-orange-800',
+  Critical: 'bg-red-900/40 text-red-300 border-red-800',
+}
+
 export default function ThreatCard({ indicator }) {
-  const { id, indicator_type, value, tlp, confidence, country_codes, sectors, attack_categories, created_at, status } = indicator
+  const { id, indicator_type, value, tlp, severity, confidence, country_codes, sectors, attack_categories, created_at, status } = indicator
 
   return (
     <Link to={`/indicators/${id}`} className="block">
@@ -42,11 +49,16 @@ export default function ThreatCard({ indicator }) {
               <p className="text-sm font-mono text-gray-200 truncate" title={value}>{value}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <span className={`text-xs px-2 py-0.5 rounded font-semibold ${TLP_COLORS[tlp] || 'bg-dark-600 text-gray-300'}`}>
-              TLP:{tlp}
-            </span>
-            <span className={`text-xs px-2 py-0.5 rounded ${status === 'enriched' ? 'bg-green-900 text-green-300' : 'bg-yellow-900 text-yellow-300'}`}>
+          <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <span className={`text-[10px] px-1.5 py-0.5 rounded border ${SEVERITY_COLORS[severity] || 'border-dark-600 text-gray-400'}`}>
+                {severity?.toUpperCase()}
+              </span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${TLP_COLORS[tlp] || 'bg-dark-600 text-gray-300'}`}>
+                TLP:{tlp}
+              </span>
+            </div>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded ${status === 'enriched' ? 'bg-green-900 text-green-300' : 'bg-yellow-900 text-yellow-300'}`}>
               {status}
             </span>
           </div>

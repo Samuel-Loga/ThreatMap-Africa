@@ -129,69 +129,69 @@ def enrich_indicator(self, indicator_id: str):
         itype = indicator.indicator_type
         value = indicator.value
         enrichment_data = {}
-        malicious_votes = 0
         country = ""
         asn = ""
 
+        # Base IP enrichment
         if itype == "ip" and not is_private(value):
             ip_data = enrich_ip_api(value)
             if ip_data:
                 country = ip_data.get("country", "")
                 asn = ip_data.get("as", "")
                 enrichment_data["ip_api"] = ip_data
-                er = EnrichmentResult(
+                db.add(EnrichmentResult(
                     indicator_id=indicator.id,
                     source="ip-api.com",
                     raw_response=ip_data,
                     malicious_votes=0,
                     country=country,
                     asn=asn,
-                )
-                db.add(er)
+                ))
 
             shodan_data = enrich_shodan(value)
             if shodan_data:
                 enrichment_data["shodan"] = shodan_data
-                er = EnrichmentResult(
+                db.add(EnrichmentResult(
                     indicator_id=indicator.id,
                     source="shodan_internetdb",
                     raw_response=shodan_data,
                     malicious_votes=len(shodan_data.get("vulns", [])),
                     country=country,
                     asn=asn,
-                )
-                db.add(er)
+                ))
 
             abuse_data = enrich_abuseipdb(value)
             if abuse_data:
                 votes = abuse_data.get("abuseConfidenceScore", 0)
-                malicious_votes = max(malicious_votes, votes)
                 enrichment_data["abuseipdb"] = abuse_data
-                er = EnrichmentResult(
+                db.add(EnrichmentResult(
                     indicator_id=indicator.id,
                     source="abuseipdb",
                     raw_response=abuse_data,
                     malicious_votes=votes,
                     country=abuse_data.get("countryCode", country),
                     asn=asn,
-                )
-                db.add(er)
+                ))
 
+        # VirusTotal enrichment (works for all supported types)
         vt_data = enrich_virustotal(value, itype)
         if vt_data:
             stats = vt_data.get("last_analysis_stats", {})
             mal = stats.get("malicious", 0)
-            malicious_votes = max(malicious_votes, mal)
             enrichment_data["virustotal"] = vt_data
-            er = EnrichmentResult(
+            
+            # Try to extract location info from VT if not already present
+            vt_country = vt_data.get("country", country)
+            vt_asn = vt_data.get("as_owner", asn)
+            
+            db.add(EnrichmentResult(
                 indicator_id=indicator.id,
                 source="virustotal",
                 raw_response=vt_data,
                 malicious_votes=mal,
-                country=country,
-                asn=asn,
-            )
-            db.add(er)
+                country=vt_country,
+                asn=vt_asn,
+            ))
 
         indicator.enrichment_data = enrichment_data
         indicator.status = "enriched"

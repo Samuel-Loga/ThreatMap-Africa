@@ -33,3 +33,5 @@ Thumbs.db
 
 # Build artifacts
 frontend/dist/
+
+GEMINI*

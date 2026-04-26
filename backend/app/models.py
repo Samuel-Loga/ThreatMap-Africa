@@ -32,6 +32,7 @@ class User(Base):
     profile_pic: Mapped[str] = mapped_column(String(500), default="", nullable=False)
     pgp_key: Mapped[str] = mapped_column(Text, default="", nullable=False)
     two_factor_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    totp_secret: Mapped[str] = mapped_column(String(64), default="", nullable=False)
     region_state: Mapped[str] = mapped_column(String(255), default="", nullable=False)
     city: Mapped[str] = mapped_column(String(255), default="", nullable=False)
     data_sharing_consent: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

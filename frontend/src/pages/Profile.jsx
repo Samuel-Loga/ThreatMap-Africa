@@ -11,6 +11,107 @@ const SEVERITY_COLORS = {
   Critical: 'bg-red-900/40 text-red-300',
 }
 
+function TwoFactorSection({ profile, onUpdated }) {
+  const [step, setStep] = useState('idle') // idle | setup | confirm | disable
+  const [qrCode, setQrCode] = useState('')
+  const [secret, setSecret] = useState('')
+  const [code, setCode] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const inputClass = "w-full bg-dark-700 border border-dark-600 rounded px-2 py-1 text-gray-200 focus:outline-none focus:border-primary text-sm"
+
+  async function startSetup() {
+    setError('')
+    setLoading(true)
+    try {
+      const res = await authApi.setup2fa()
+      setQrCode(res.data.qr_code)
+      setSecret(res.data.secret)
+      setStep('setup')
+    } catch { setError('Failed to start 2FA setup') }
+    finally { setLoading(false) }
+  }
+
+  async function confirmSetup() {
+    setError('')
+    setLoading(true)
+    try {
+      await authApi.verifySetup2fa(code)
+      setStep('idle')
+      setCode('')
+      onUpdated()
+    } catch (err) { setError(err.response?.data?.detail || 'Invalid code') }
+    finally { setLoading(false) }
+  }
+
+  async function confirmDisable() {
+    setError('')
+    setLoading(true)
+    try {
+      await authApi.disable2fa(password)
+      setStep('idle')
+      setPassword('')
+      onUpdated()
+    } catch (err) { setError(err.response?.data?.detail || 'Incorrect password') }
+    finally { setLoading(false) }
+  }
+
+  return (
+    <div className="bg-dark-900/50 p-4 rounded-xl border border-dark-700 space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className={`w-3 h-3 rounded-full flex-shrink-0 ${profile.two_factor_enabled ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+          <div>
+            <p className="text-xs font-bold text-white uppercase tracking-tight">Two-Factor Auth</p>
+            <p className="text-[10px] text-gray-500 uppercase font-bold">{profile.two_factor_enabled ? 'Active' : 'Inactive'}</p>
+          </div>
+        </div>
+        {step === 'idle' && (
+          profile.two_factor_enabled
+            ? <button onClick={() => { setStep('disable'); setError('') }} className="text-[10px] px-2 py-1 rounded border border-red-800 text-red-400 hover:bg-red-900/30 transition-colors">Disable</button>
+            : <button onClick={startSetup} disabled={loading} className="text-[10px] px-2 py-1 rounded border border-primary text-primary hover:bg-primary/10 transition-colors disabled:opacity-50">{loading ? '…' : 'Enable'}</button>
+        )}
+      </div>
+
+      {error && <p className="text-red-400 text-xs">{error}</p>}
+
+      {step === 'setup' && (
+        <div className="space-y-3">
+          <p className="text-xs text-gray-400">Scan this QR code with <span className="text-white font-semibold">Google Authenticator</span>, <span className="text-white font-semibold">Authy</span>, or any TOTP app.</p>
+          <div className="flex justify-center bg-white p-2 rounded-lg">
+            <img src={qrCode} alt="2FA QR Code" className="w-40 h-40" />
+          </div>
+          <p className="text-[10px] text-gray-500 text-center">Or enter manually: <span className="font-mono text-gray-300 select-all">{secret}</span></p>
+          <p className="text-xs text-gray-400">Enter the 6-digit code from your app to confirm:</p>
+          <input
+            type="text" inputMode="numeric" maxLength={6}
+            value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+            className={`${inputClass} text-center font-mono tracking-widest text-lg`}
+            placeholder="000000"
+          />
+          <div className="flex gap-2">
+            <button onClick={() => { setStep('idle'); setCode('') }} className="flex-1 text-xs py-1.5 rounded border border-dark-600 text-gray-400 hover:bg-dark-700">Cancel</button>
+            <button onClick={confirmSetup} disabled={loading || code.length !== 6} className="flex-1 text-xs py-1.5 rounded bg-primary text-white hover:bg-primary/90 disabled:opacity-50">{loading ? 'Verifying…' : 'Confirm & Enable'}</button>
+          </div>
+        </div>
+      )}
+
+      {step === 'disable' && (
+        <div className="space-y-3">
+          <p className="text-xs text-gray-400">Enter your password to disable 2FA:</p>
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} placeholder="Your password" />
+          <div className="flex gap-2">
+            <button onClick={() => { setStep('idle'); setPassword('') }} className="flex-1 text-xs py-1.5 rounded border border-dark-600 text-gray-400 hover:bg-dark-700">Cancel</button>
+            <button onClick={confirmDisable} disabled={loading || !password} className="flex-1 text-xs py-1.5 rounded bg-red-700 text-white hover:bg-red-600 disabled:opacity-50">{loading ? 'Disabling…' : 'Disable 2FA'}</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Profile() {
   const { user: authUser } = useAuth()
   const [profile, setProfile] = useState(null)
@@ -349,15 +450,7 @@ export default function Profile() {
             {/* Security Section */}
             <section className="space-y-6 pt-6 border-t border-dark-700">
               <h3 className="text-xs font-black text-gray-500 uppercase tracking-[0.2em]">Security</h3>
-              <div className="bg-dark-900/50 p-4 rounded-xl border border-dark-700 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className={`w-3 h-3 rounded-full ${profile.two_factor_enabled ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-                  <div>
-                    <p className="text-xs font-bold text-white uppercase tracking-tight">Two-Factor Auth</p>
-                    <p className="text-[10px] text-gray-500 uppercase font-bold">{profile.two_factor_enabled ? 'Active' : 'Inactive'}</p>
-                  </div>
-                </div>
-              </div>
+              <TwoFactorSection profile={profile} onUpdated={fetchProfile} />
             </section>
           </div>
         </div>

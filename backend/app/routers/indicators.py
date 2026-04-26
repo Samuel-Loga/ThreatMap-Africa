@@ -111,7 +111,6 @@ async def list_indicators(
     search: Optional[str] = Query(None),
     submitted_by: Optional[uuid.UUID] = Query(None),
     since: Optional[datetime] = Query(None),
-    submitted_by: Optional[uuid.UUID] = Query(None),
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),

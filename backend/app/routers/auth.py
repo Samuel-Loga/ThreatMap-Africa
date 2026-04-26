@@ -4,12 +4,11 @@ import pyotp
 import qrcode
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
 from app.models import User
-from app.schemas import UserCreate, UserOut, Token, UserUpdate
+from app.schemas import UserCreate, UserOut, Token, UserUpdate, LoginResponse
 from app.auth import get_password_hash, verify_password, create_access_token, decode_token
 from app.dependencies import get_current_user
 
@@ -37,7 +36,7 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     return user
 
 
-@router.post("/token")
+@router.post("/token", response_model=LoginResponse)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == form_data.username))
     user = result.scalar_one_or_none()
@@ -56,7 +55,11 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
             {"sub": str(user.id), "type": "pre_auth"},
             expires_delta=__import__("datetime").timedelta(minutes=5),
         )
-        return JSONResponse({"requires_2fa": True, "pre_auth_token": pre_auth_token})
+        return LoginResponse(
+            requires_2fa=True,
+            pre_auth_token=pre_auth_token,
+            access_token=None,
+        )
 
     token = create_access_token({
         "sub": str(user.id),
@@ -64,7 +67,11 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
         "username": user.username,
         "onboarding_completed": user.onboarding_completed,
     })
-    return Token(access_token=token)
+    return LoginResponse(
+        access_token=token,
+        requires_2fa=False,
+        pre_auth_token=None,
+    )
 
 
 @router.post("/2fa/verify", response_model=Token)

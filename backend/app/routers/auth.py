@@ -4,8 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
 from app.models import User
-from app.schemas import UserCreate, UserOut, Token
+from app.schemas import UserCreate, UserOut, Token, UserUpdate
 from app.auth import get_password_hash, verify_password, create_access_token
+from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
@@ -43,5 +44,30 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
         )
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
-    token = create_access_token({"sub": str(user.id), "role": user.role})
+    token = create_access_token({
+        "sub": str(user.id),
+        "role": user.role,
+        "onboarding_completed": user.onboarding_completed,
+    })
     return Token(access_token=token)
+
+
+@router.get("/me", response_model=UserOut)
+async def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+@router.patch("/me", response_model=UserOut)
+async def update_me(
+    user_update: UserUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    update_data = user_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(current_user, key, value)
+
+    db.add(current_user)
+    await db.commit()
+    await db.refresh(current_user)
+    return current_user

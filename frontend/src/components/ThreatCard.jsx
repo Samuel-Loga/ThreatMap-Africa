@@ -29,14 +29,30 @@ function ConfidenceBar({ value }) {
 }
 
 const SEVERITY_COLORS = {
-  Low: 'bg-blue-900/40 text-blue-300 border-blue-800',
+  Info: 'bg-blue-900/40 text-blue-300 border-blue-800',
+  Low: 'bg-green-900/40 text-green-300 border-green-800',
   Medium: 'bg-yellow-900/40 text-yellow-300 border-yellow-800',
   High: 'bg-orange-900/40 text-orange-300 border-orange-800',
   Critical: 'bg-red-900/40 text-red-300 border-red-800',
 }
 
+const regionNames = new Intl.DisplayNames(['en'], { type: 'region' })
+
+function getCountryName(cc) {
+  try {
+    return regionNames.of(cc)
+  } catch {
+    return cc
+  }
+}
+
+function toTitleCase(str) {
+  if (!str) return ''
+  return str.replace(/_/g, ' ').replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase())
+}
+
 export default function ThreatCard({ indicator }) {
-  const { id, indicator_type, value, tlp, severity, confidence, country_codes, sectors, attack_categories, created_at, status } = indicator
+  const { id, indicator_type, value, tlp, severity, confidence, country_codes, sectors, attack_categories, description, created_at, status } = indicator
 
   return (
     <Link to={`/indicators/${id}`} className="block">
@@ -49,20 +65,22 @@ export default function ThreatCard({ indicator }) {
               <p className="text-sm font-mono text-gray-200 truncate" title={value}>{value}</p>
             </div>
           </div>
-          <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <span className={`text-[10px] px-1.5 py-0.5 rounded border ${SEVERITY_COLORS[severity] || 'border-dark-600 text-gray-400'}`}>
-                {severity?.toUpperCase()}
-              </span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${TLP_COLORS[tlp] || 'bg-dark-600 text-gray-300'}`}>
-                TLP:{tlp}
-              </span>
-            </div>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span className={`text-[10px] px-1.5 py-0.5 rounded border ${SEVERITY_COLORS[severity] || 'border-dark-600 text-gray-400'}`}>
+              {toTitleCase(severity)}
+            </span>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${TLP_COLORS[tlp] || 'bg-dark-600 text-gray-300'}`}>
+              {toTitleCase(tlp)}
+            </span>
             <span className={`text-[10px] px-1.5 py-0.5 rounded ${status === 'enriched' ? 'bg-green-900 text-green-300' : 'bg-yellow-900 text-yellow-300'}`}>
-              {status}
+              {toTitleCase(status)}
             </span>
           </div>
         </div>
+
+        {description && (
+          <p className="mt-2 text-xs text-gray-400 line-clamp-2 italic">{description}</p>
+        )}
 
         <div className="mt-3">
           <ConfidenceBar value={confidence} />
@@ -70,17 +88,23 @@ export default function ThreatCard({ indicator }) {
 
         <div className="mt-3 flex flex-wrap gap-1">
           {(country_codes || []).map((cc) => (
-            <span key={cc} className="text-xs bg-dark-700 text-blue-300 px-1.5 py-0.5 rounded">{cc}</span>
+            <span key={cc} className="text-[10px] bg-blue-900/30 text-blue-300 border border-blue-800/50 px-1.5 py-0.5 rounded">
+              {getCountryName(cc)}
+            </span>
           ))}
           {(sectors || []).map((s) => (
-            <span key={s} className="text-xs bg-dark-700 text-purple-300 px-1.5 py-0.5 rounded">{s}</span>
+            <span key={s} className="text-[10px] bg-purple-900/30 text-purple-300 border border-purple-800/50 px-1.5 py-0.5 rounded">
+              {toTitleCase(s)}
+            </span>
           ))}
           {(attack_categories || []).map((a) => (
-            <span key={a} className="text-xs bg-dark-700 text-accent px-1.5 py-0.5 rounded">{a.replace(/_/g, ' ')}</span>
+            <span key={a} className="text-[10px] bg-emerald-900/30 text-emerald-300 border border-emerald-800/50 px-1.5 py-0.5 rounded">
+              {toTitleCase(a)}
+            </span>
           ))}
         </div>
 
-        <p className="mt-2 text-xs text-gray-500">
+        <p className="mt-2 text-[10px] text-gray-500">
           {new Date(created_at).toLocaleString()}
         </p>
       </div>

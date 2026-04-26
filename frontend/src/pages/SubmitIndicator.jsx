@@ -8,7 +8,7 @@ const COUNTRIES = [
   "GW","KM","LR","LS","LY","MG","ML","MR","MU","MW","MZ","NA","NE","SC","SD",
   "SL","SO","SS","ST","SZ","TD","TG","TN","ZW",
 ]
-const SECTORS = ["banking","telecommunications","government","healthcare","energy","retail","ngo","education"]
+const SECTORS = ["Banking","Telecommunications","Government","Healthcare","Energy","Retail","NGO","Education"]
 const ATTACK_CATS = [
   "Phishing", "Business Email Compromise", "Mobile Money Fraud", "SIM Swap", 
   "Ransomware", "Data Exfiltration", "DDoS", "SSH Brute Force", 
@@ -18,7 +18,7 @@ const ATTACK_CATS = [
 ]
 const INDICATOR_TYPES = ["ip","domain","url","hash_md5","hash_sha256","email"]
 const TLP_VALUES = ["WHITE","GREEN","AMBER","RED"]
-const SEVERITY_VALUES = ["Low", "Medium", "High", "Critical"]
+const SEVERITY_VALUES = ["Info", "Low", "Medium", "High", "Critical"]
 
 const defaultForm = {
   indicator_type: 'ip',

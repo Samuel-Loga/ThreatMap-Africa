@@ -35,6 +35,8 @@ export const authApi = {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     })
   },
+  me: () => client.get('/auth/me'),
+  updateMe: (data) => client.patch('/auth/me', data),
 }
 
 export const indicatorsApi = {

@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react'
-import { authApi } from '../api/client'
+import { Link } from 'react-router-dom'
+import { authApi, indicatorsApi } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+
+const SEVERITY_COLORS = {
+  Info: 'bg-blue-900/40 text-blue-300',
+  Low: 'bg-green-900/40 text-green-300',
+  Medium: 'bg-yellow-900/40 text-yellow-300',
+  High: 'bg-orange-900/40 text-orange-300',
+  Critical: 'bg-red-900/40 text-red-300',
+}
 
 export default function Profile() {
   const { user: authUser } = useAuth()
@@ -10,6 +19,9 @@ export default function Profile() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [editData, setEditData] = useState({})
+
+  const [submissions, setSubmissions] = useState([])
+  const [subLoading, setSubLoading] = useState(false)
 
   useEffect(() => {
     fetchProfile()
@@ -21,11 +33,24 @@ export default function Profile() {
       const res = await authApi.me()
       setProfile(res.data)
       setEditData(res.data)
+      fetchSubmissions(res.data.id)
     } catch (err) {
       setError('Failed to load profile')
       console.error(err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function fetchSubmissions(userId) {
+    setSubLoading(true)
+    try {
+      const res = await indicatorsApi.list({ submitted_by: userId, limit: 50 })
+      setSubmissions(res.data)
+    } catch (err) {
+      console.error('Failed to load submissions', err)
+    } finally {
+      setSubLoading(false)
     }
   }
 
@@ -336,6 +361,36 @@ export default function Profile() {
             </section>
           </div>
         </div>
+      </div>
+
+      {/* My Submissions */}
+      <div className="bg-dark-800 border border-dark-600 rounded-xl p-6">
+        <h3 className="text-xs font-black text-gray-500 uppercase tracking-[0.2em] border-l-4 border-primary pl-4 mb-4">My Submitted Indicators</h3>
+        {subLoading && <p className="text-gray-400 text-sm animate-pulse">Loading submissions…</p>}
+        {!subLoading && submissions.length === 0 && (
+          <p className="text-gray-500 text-sm italic">No indicators submitted yet.</p>
+        )}
+        {!subLoading && submissions.length > 0 && (
+          <div className="space-y-2">
+            {submissions.map((ind) => (
+              <Link
+                key={ind.id}
+                to={`/indicators/${ind.id}`}
+                className="flex items-center justify-between gap-3 bg-dark-900/50 border border-dark-700 rounded-lg px-4 py-3 hover:border-primary/50 transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-[10px] font-mono bg-dark-700 text-gray-400 px-2 py-0.5 rounded uppercase flex-shrink-0">{ind.indicator_type}</span>
+                  <span className="text-sm font-mono text-gray-200 truncate">{ind.value}</span>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className={`text-[10px] px-2 py-0.5 rounded font-semibold ${SEVERITY_COLORS[ind.severity] || 'text-gray-400'}`}>{ind.severity}</span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded ${ind.status === 'enriched' ? 'bg-green-900 text-green-300' : 'bg-yellow-900 text-yellow-300'}`}>{ind.status}</span>
+                  <span className="text-[10px] text-gray-500">{new Date(ind.created_at).toLocaleDateString()}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

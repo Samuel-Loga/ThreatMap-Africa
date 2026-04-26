@@ -99,7 +99,9 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    command: sh -c "npm install && npm run dev"
+    ports:
+      - "5173:5173"
+    command: sh -c "npm install && npm run dev -- --host"
 
   nginx:
     image: nginx:1.25-alpine

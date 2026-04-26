@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { Monitor, Globe, Link2, Hash, Mail, Search } from 'lucide-react'
 
 const TLP_COLORS = {
   WHITE: 'bg-gray-200 text-gray-800',
@@ -8,12 +9,12 @@ const TLP_COLORS = {
 }
 
 const TYPE_ICONS = {
-  ip: '🖥️',
-  domain: '🌐',
-  url: '🔗',
-  hash_md5: '#️⃣',
-  hash_sha256: '#️⃣',
-  email: '📧',
+  ip: Monitor,
+  domain: Globe,
+  url: Link2,
+  hash_md5: Hash,
+  hash_sha256: Hash,
+  email: Mail,
 }
 
 function ConfidenceBar({ value }) {
@@ -30,13 +31,16 @@ function ConfidenceBar({ value }) {
 
 export default function ThreatCard({ indicator }) {
   const { id, indicator_type, value, tlp, confidence, country_codes, sectors, attack_categories, created_at, status } = indicator
+  const Icon = TYPE_ICONS[indicator_type] || Search
 
   return (
     <Link to={`/indicators/${id}`} className="block">
       <div className="bg-dark-800 border border-dark-600 rounded-lg p-4 hover:border-primary/50 transition-colors cursor-pointer">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-xl flex-shrink-0">{TYPE_ICONS[indicator_type] || '🔍'}</span>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 bg-dark-700 rounded-lg text-primary">
+              <Icon size={20} />
+            </div>
             <div className="min-w-0">
               <p className="text-xs text-gray-500 uppercase tracking-wide">{indicator_type}</p>
               <p className="text-sm font-mono text-gray-200 truncate" title={value}>{value}</p>

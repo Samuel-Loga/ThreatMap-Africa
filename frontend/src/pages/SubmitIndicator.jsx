@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { indicatorsApi } from '../api/client'
 import { Link } from 'react-router-dom'
+import { CheckCircle2, Send, AlertTriangle, Shield, Info, ArrowRight } from 'lucide-react'
 
 const COUNTRIES = [
   "NG","KE","ZA","GH","ET","TZ","EG","MA","SN","RW","CM","UG","ZM","CI","DZ",
@@ -109,22 +110,30 @@ export default function SubmitIndicator() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Submit Indicator</h1>
-        <p className="text-gray-400 mt-1">Report a new threat indicator for African networks</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Send className="text-primary" size={24} />
+            Submit Indicator
+          </h1>
+          <p className="text-gray-400 mt-1">Report a new threat indicator for African networks</p>
+        </div>
       </div>
 
       {submitted && (
-        <div className="bg-green-900/30 border border-green-700 rounded-lg p-4 text-center">
-          <p className="text-green-300 font-semibold text-lg">✅ Indicator submitted successfully!</p>
-          <p className="text-sm text-gray-400 mt-1">
-            The indicator has been queued for automated enrichment.
+        <div className="bg-green-900/20 border border-green-700/50 rounded-xl p-8 text-center shadow-xl">
+          <div className="flex justify-center mb-4">
+            <CheckCircle2 size={48} className="text-green-500" />
+          </div>
+          <p className="text-green-300 font-bold text-2xl">Submission Successful!</p>
+          <p className="text-sm text-gray-400 mt-2 max-w-md mx-auto">
+            The indicator has been queued for automated enrichment and will appear in the feed shortly.
           </p>
-          <div className="mt-4 flex justify-center gap-4">
-            <Link to={`/indicators/${submitted.id}`} className="px-4 py-2 bg-primary rounded text-sm font-semibold hover:bg-primary/90">
-              View Threat Detail
+          <div className="mt-8 flex justify-center gap-4">
+            <Link to={`/indicators/${submitted.id}`} className="flex items-center gap-2 px-6 py-2.5 bg-primary rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors">
+              View Threat Detail <ArrowRight size={16} />
             </Link>
-            <button onClick={() => setSubmitted(null)} className="px-4 py-2 border border-dark-600 rounded text-sm font-semibold hover:bg-dark-700">
+            <button onClick={() => setSubmitted(null)} className="px-6 py-2.5 border border-dark-600 rounded-lg text-sm font-semibold hover:bg-dark-700 transition-colors">
               Submit Another
             </button>
           </div>
@@ -134,7 +143,8 @@ export default function SubmitIndicator() {
       {!submitted && (
         <form onSubmit={handleSubmit} className="bg-dark-800 border border-dark-600 rounded-xl p-6 space-y-6 shadow-xl">
           {error && (
-            <div className="bg-red-900/30 border border-red-700 text-red-300 rounded px-4 py-3 text-sm">
+            <div className="bg-red-900/30 border border-red-700 text-red-300 rounded px-4 py-3 text-sm flex items-center gap-2">
+              <AlertTriangle size={16} />
               {error}
             </div>
           )}
@@ -168,7 +178,8 @@ export default function SubmitIndicator() {
           </div>
 
           <div className="bg-dark-700/30 p-4 rounded-lg border border-dark-600/50">
-            <label className="block text-sm font-semibold text-primary mb-2">
+            <label className="block text-sm font-semibold text-primary mb-2 flex items-center gap-2">
+              <Shield size={16} />
               {activeConfig.label} Content *
             </label>
             <input
@@ -179,7 +190,8 @@ export default function SubmitIndicator() {
               required
               placeholder={activeConfig.placeholder}
             />
-            <p className="text-[10px] text-gray-500 mt-2 uppercase tracking-widest">
+            <p className="text-[10px] text-gray-500 mt-2 uppercase tracking-widest flex items-center gap-1">
+              <Info size={10} />
               Please ensure the {form.indicator_type} is defanged if necessary or provided in raw format.
             </p>
           </div>

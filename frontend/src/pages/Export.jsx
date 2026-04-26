@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { exportApi } from '../api/client'
+import { Eye, Download, ShieldCheck, Database } from 'lucide-react'
 
 const COUNTRIES = [
   "NG","KE","ZA","GH","ET","TZ","EG","MA","SN","RW","CM","UG","ZM","CI","DZ",
@@ -60,12 +61,18 @@ export default function Export() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Export</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2">
+          <Database className="text-primary" />
+          Export
+        </h1>
         <p className="text-gray-400 mt-1">Export threat indicators as STIX 2.1 bundle</p>
       </div>
 
-      <div className="bg-dark-800 border border-dark-600 rounded-xl p-6 space-y-4">
-        <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Filter Options</h2>
+      <div className="bg-dark-800 border border-dark-600 rounded-xl p-6 space-y-4 shadow-xl">
+        <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wide flex items-center gap-2">
+          <ShieldCheck size={16} className="text-primary" />
+          Filter Options
+        </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
@@ -101,16 +108,16 @@ export default function Export() {
           <button
             onClick={handlePreview}
             disabled={loading}
-            className="flex-1 border border-primary text-primary hover:bg-primary/10 disabled:opacity-50 font-semibold rounded py-2.5 transition-colors text-sm"
+            className="flex-1 flex items-center justify-center gap-2 border border-primary text-primary hover:bg-primary/10 disabled:opacity-50 font-semibold rounded py-2.5 transition-colors text-sm"
           >
-            {loading ? 'Loading…' : '👁 Preview'}
+            {loading ? 'Loading…' : <><Eye size={18} /> Preview</>}
           </button>
           <button
             onClick={handleDownload}
             disabled={loading}
-            className="flex-1 bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-semibold rounded py-2.5 transition-colors text-sm"
+            className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-semibold rounded py-2.5 transition-colors text-sm"
           >
-            {loading ? 'Loading…' : '⬇ Download STIX Bundle'}
+            {loading ? 'Loading…' : <><Download size={18} /> Download STIX</>}
           </button>
         </div>
       </div>

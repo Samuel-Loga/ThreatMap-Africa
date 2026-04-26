@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { indicatorsApi } from '../api/client'
 import ThreatCard from '../components/ThreatCard'
 import FilterPanel from '../components/FilterPanel'
+import { Bell, RefreshCw } from 'lucide-react'
 
 const PAGE_SIZE = 20
 
@@ -76,12 +77,16 @@ export default function ThreatFeed() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Threat Feed</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            Threat Feed
+            {loading && <RefreshCw size={20} className="animate-spin text-primary" />}
+          </h1>
           <p className="text-gray-400 mt-1">Live African threat indicators</p>
         </div>
         {liveNotification && (
-          <div className="bg-green-900/30 border border-green-700 text-green-300 text-sm px-4 py-2 rounded animate-pulse">
-            🔔 {liveNotification}
+          <div className="bg-green-900/30 border border-green-700 text-green-300 text-sm px-4 py-2 rounded flex items-center gap-2 animate-pulse">
+            <Bell size={16} />
+            {liveNotification}
           </div>
         )}
       </div>

@@ -54,8 +54,9 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-dark-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-primary">🌍 ThreatMap Africa</h1>
+        <div className="text-center mb-8 flex flex-col items-center">
+          <Globe className="text-primary w-12 h-12 mb-3" />
+          <h1 className="text-3xl font-bold text-primary">ThreatMap Africa</h1>
           <p className="text-gray-400 mt-2">African Cyber Threat Intelligence Platform</p>
         </div>
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { indicatorsApi } from '../api/client'
 import ThreatCard from '../components/ThreatCard'
 import FilterPanel from '../components/FilterPanel'
+import { Bell, RefreshCw } from 'lucide-react'
 
 const PAGE_SIZE = 20
 
@@ -78,19 +79,18 @@ export default function ThreatFeed() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col md:flex-row md:items-center gap-6 justify-between">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold whitespace-nowrap">Threat Feed</h1>
-          <div className="hidden md:block w-px h-8 bg-dark-600"></div>
-          <div className="relative flex-1 min-w-[300px]">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">🔍</span>
-            <input
-              type="text"
-              placeholder="Search indicators, countries, descriptions..."
-              className="w-full bg-dark-800 border border-dark-600 rounded-lg pl-9 pr-4 py-2 text-sm text-gray-200 focus:outline-none focus:border-primary transition-colors"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            Threat Feed
+            {loading && <RefreshCw size={20} className="animate-spin text-primary" />}
+          </h1>
+          <p className="text-gray-400 mt-1">Live African threat indicators</p>
+        </div>
+        {liveNotification && (
+          <div className="bg-green-900/30 border border-green-700 text-green-300 text-sm px-4 py-2 rounded flex items-center gap-2 animate-pulse">
+            <Bell size={16} />
+            {liveNotification}
           </div>
         </div>
         

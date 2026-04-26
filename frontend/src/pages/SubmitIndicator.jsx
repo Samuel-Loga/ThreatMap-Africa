@@ -10,16 +10,21 @@ const COUNTRIES = [
 ]
 const SECTORS = ["banking","telecommunications","government","healthcare","energy","retail","ngo","education"]
 const ATTACK_CATS = [
-  "mobile_money_fraud","sim_swap","business_email_compromise","phishing_localized",
-  "ransomware","account_takeover","supply_chain","data_exfiltration",
+  "Phishing", "Business Email Compromise", "Mobile Money Fraud", "SIM Swap", 
+  "Ransomware", "Data Exfiltration", "DDoS", "SSH Brute Force", 
+  "Supply Chain Attack", "Credential Stuffing", "Social Engineering", 
+  "Malware Distribution", "Cryptojacking", "SQL Injection", "XSS", 
+  "API Abuse", "Other"
 ]
 const INDICATOR_TYPES = ["ip","domain","url","hash_md5","hash_sha256","email"]
 const TLP_VALUES = ["WHITE","GREEN","AMBER","RED"]
+const SEVERITY_VALUES = ["Low", "Medium", "High", "Critical"]
 
 const defaultForm = {
   indicator_type: 'ip',
   value: '',
   tlp: 'GREEN',
+  severity: 'Low',
   confidence: 50,
   country_codes: [],
   sectors: [],
@@ -122,11 +127,11 @@ export default function SubmitIndicator() {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className={labelClass}>Indicator Type *</label>
+              <label className={labelClass}>Type *</label>
               <select className={inputClass} value={form.indicator_type} onChange={set('indicator_type')}>
-                {INDICATOR_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                {INDICATOR_TYPES.map((t) => <option key={t} value={t}>{t.toUpperCase()}</option>)}
               </select>
             </div>
             <div>
@@ -135,18 +140,46 @@ export default function SubmitIndicator() {
                 {TLP_VALUES.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
+            <div>
+              <label className={labelClass}>Severity *</label>
+              <select className={inputClass} value={form.severity} onChange={set('severity')}>
+                {SEVERITY_VALUES.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
           </div>
 
           <div>
-            <label className={labelClass}>Value *</label>
+            <label className={labelClass}>
+              {form.indicator_type === 'ip' && 'IP Address *'}
+              {form.indicator_type === 'domain' && 'Domain Name *'}
+              {form.indicator_type === 'url' && 'Target URL *'}
+              {form.indicator_type === 'hash_md5' && 'MD5 Hash *'}
+              {form.indicator_type === 'hash_sha256' && 'SHA256 Hash *'}
+              {form.indicator_type === 'email' && 'Email Address *'}
+            </label>
             <input
               type="text"
               className={inputClass}
               value={form.value}
               onChange={set('value')}
               required
-              placeholder="e.g. 192.0.2.1, evil.co.ke, abc123..."
+              placeholder={
+                form.indicator_type === 'ip' ? 'e.g. 1.2.3.4' :
+                form.indicator_type === 'domain' ? 'e.g. malicious.com' :
+                form.indicator_type === 'url' ? 'https://example.com/malware' :
+                form.indicator_type === 'hash_md5' ? '32-character hex' :
+                form.indicator_type === 'hash_sha256' ? '64-character hex' :
+                'e.g. phish@bank.co.za'
+              }
             />
+            <p className="text-[10px] text-gray-500 mt-1 italic">
+              {form.indicator_type === 'ip' && 'Provide a single IPv4 address.'}
+              {form.indicator_type === 'domain' && 'Provide a fully qualified domain name.'}
+              {form.indicator_type === 'url' && 'Provide the full URL including protocol.'}
+              {form.indicator_type === 'hash_md5' && 'Provide a 32-character hexadecimal MD5 hash.'}
+              {form.indicator_type === 'hash_sha256' && 'Provide a 64-character hexadecimal SHA256 hash.'}
+              {form.indicator_type === 'email' && 'Provide a complete email address.'}
+            </p>
           </div>
 
           <div>

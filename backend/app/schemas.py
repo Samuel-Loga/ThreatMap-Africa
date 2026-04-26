@@ -7,6 +7,7 @@ import re
 
 INDICATOR_TYPES = ["ip", "domain", "url", "hash_md5", "hash_sha256", "email"]
 TLP_VALUES = ["WHITE", "GREEN", "AMBER", "RED"]
+SEVERITY_VALUES = ["Low", "Medium", "High", "Critical"]
 ROLES = ["Viewer", "Contributor", "Analyst", "OrgAdmin", "SuperAdmin"]
 AFRICAN_COUNTRY_CODES = [
     "NG", "KE", "ZA", "GH", "ET", "TZ", "EG", "MA", "SN", "RW",
@@ -18,9 +19,11 @@ AFRICAN_COUNTRY_CODES = [
 ]
 SECTORS = ["banking", "telecommunications", "government", "healthcare", "energy", "retail", "ngo", "education"]
 ATTACK_CATEGORIES = [
-    "mobile_money_fraud", "sim_swap", "business_email_compromise",
-    "phishing_localized", "ransomware", "account_takeover",
-    "supply_chain", "data_exfiltration",
+    "Phishing", "Business Email Compromise", "Mobile Money Fraud", "SIM Swap", 
+    "Ransomware", "Data Exfiltration", "DDoS", "SSH Brute Force", 
+    "Supply Chain Attack", "Credential Stuffing", "Social Engineering", 
+    "Malware Distribution", "Cryptojacking", "SQL Injection", "XSS", 
+    "API Abuse", "Other"
 ]
 
 IP_REGEX = re.compile(
@@ -84,6 +87,7 @@ class IndicatorCreate(BaseModel):
     indicator_type: str
     value: str
     tlp: str = "GREEN"
+    severity: str = "Low"
     confidence: int = Field(50, ge=0, le=100)
     country_codes: list[str] = []
     sectors: list[str] = []
@@ -104,6 +108,13 @@ class IndicatorCreate(BaseModel):
     def validate_tlp(cls, v):
         if v not in TLP_VALUES:
             raise ValueError(f"tlp must be one of {TLP_VALUES}")
+        return v
+
+    @field_validator("severity")
+    @classmethod
+    def validate_severity(cls, v):
+        if v not in SEVERITY_VALUES:
+            raise ValueError(f"severity must be one of {SEVERITY_VALUES}")
         return v
 
     @field_validator("value")
@@ -171,6 +182,7 @@ class IndicatorOut(BaseModel):
     indicator_type: str
     value: str
     tlp: str
+    severity: str
     confidence: int
     country_codes: list[str]
     sectors: list[str]

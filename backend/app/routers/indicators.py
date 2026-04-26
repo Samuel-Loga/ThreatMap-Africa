@@ -76,6 +76,7 @@ async def create_indicator(
         indicator_type=indicator_in.indicator_type,
         value=indicator_in.value,
         tlp=indicator_in.tlp,
+        severity=indicator_in.severity,
         confidence=indicator_in.confidence,
         country_codes=indicator_in.country_codes,
         sectors=indicator_in.sectors,

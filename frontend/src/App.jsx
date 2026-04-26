@@ -13,6 +13,8 @@ import Profile from './pages/Profile'
 import Onboarding from './pages/Onboarding'
 import OnboardingGuard from './components/OnboardingGuard'
 
+import CountryDirectory from './pages/CountryDirectory'
+
 export default function App() {
   return (
     <AuthProvider>
@@ -29,6 +31,7 @@ export default function App() {
                 <Route path="/feed" element={<ThreatFeed />} />
                 <Route path="/submit" element={<SubmitIndicator />} />
                 <Route path="/indicators/:id" element={<IndicatorDetail />} />
+                <Route path="/countries" element={<CountryDirectory />} />
                 <Route path="/export" element={<Export />} />
                 <Route path="/profile" element={<Profile />} />
               </Route>

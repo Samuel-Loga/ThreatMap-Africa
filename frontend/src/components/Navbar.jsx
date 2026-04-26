@@ -6,6 +6,7 @@ const navItems = [
   { to: '/feed', label: '📡 Threat Feed' },
   { to: '/submit', label: '➕ Submit IOC' },
   { to: '/export', label: '📤 Export' },
+  { to: '/countries', label: '🗺️ Countries' },
 ]
 
 export default function Navbar() {

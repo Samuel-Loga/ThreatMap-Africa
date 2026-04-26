@@ -124,6 +124,14 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 
+class LoginResponse(BaseModel):
+    """Response for login endpoint - handles both direct login and 2FA required scenarios"""
+    access_token: Optional[str] = None
+    token_type: str = "bearer"
+    requires_2fa: bool = False
+    pre_auth_token: Optional[str] = None
+
+
 class IndicatorCreate(BaseModel):
     indicator_type: str
     value: str

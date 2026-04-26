@@ -161,59 +161,75 @@ def enrich_indicator(self, indicator_id: str):
                 country = ip_data.get("country", "")
                 asn = ip_data.get("as", "")
                 enrichment_data["ip_api"] = ip_data
-                db.add(EnrichmentResult(
-                    indicator_id=indicator.id,
-                    source="ip-api.com",
-                    raw_response=ip_data,
-                    malicious_votes=0,
-                    country=country,
-                    asn=asn,
-                ))
+                existing = db.execute(select(EnrichmentResult).where(
+                    EnrichmentResult.indicator_id == indicator.id,
+                    EnrichmentResult.source == "ip-api.com"
+                )).scalar_one_or_none()
+                if not existing:
+                    db.add(EnrichmentResult(
+                        indicator_id=indicator.id,
+                        source="ip-api.com",
+                        raw_response=ip_data,
+                        malicious_votes=0,
+                        country=country,
+                        asn=asn,
+                    ))
 
             shodan_data = enrich_shodan(value)
             if shodan_data:
                 enrichment_data["shodan"] = shodan_data
-                db.add(EnrichmentResult(
-                    indicator_id=indicator.id,
-                    source="shodan_internetdb",
-                    raw_response=shodan_data,
-                    malicious_votes=len(shodan_data.get("vulns", [])),
-                    country=country,
-                    asn=asn,
-                ))
+                existing = db.execute(select(EnrichmentResult).where(
+                    EnrichmentResult.indicator_id == indicator.id,
+                    EnrichmentResult.source == "shodan_internetdb"
+                )).scalar_one_or_none()
+                if not existing:
+                    db.add(EnrichmentResult(
+                        indicator_id=indicator.id,
+                        source="shodan_internetdb",
+                        raw_response=shodan_data,
+                        malicious_votes=len(shodan_data.get("vulns", [])),
+                        country=country,
+                        asn=asn,
+                    ))
 
             abuse_data = enrich_abuseipdb(value)
             if abuse_data:
                 votes = abuse_data.get("abuseConfidenceScore", 0)
                 enrichment_data["abuseipdb"] = abuse_data
-                db.add(EnrichmentResult(
-                    indicator_id=indicator.id,
-                    source="abuseipdb",
-                    raw_response=abuse_data,
-                    malicious_votes=votes,
-                    country=abuse_data.get("countryCode", country),
-                    asn=asn,
-                ))
+                existing = db.execute(select(EnrichmentResult).where(
+                    EnrichmentResult.indicator_id == indicator.id,
+                    EnrichmentResult.source == "abuseipdb"
+                )).scalar_one_or_none()
+                if not existing:
+                    db.add(EnrichmentResult(
+                        indicator_id=indicator.id,
+                        source="abuseipdb",
+                        raw_response=abuse_data,
+                        malicious_votes=votes,
+                        country=abuse_data.get("countryCode", country),
+                        asn=asn,
+                    ))
 
-        # VirusTotal enrichment (works for all supported types)
         vt_data = enrich_virustotal(value, itype)
         if vt_data:
             stats = vt_data.get("last_analysis_stats", {})
             mal = stats.get("malicious", 0)
             enrichment_data["virustotal"] = vt_data
-            
-            # Try to extract location info from VT if not already present
             vt_country = vt_data.get("country", country)
             vt_asn = vt_data.get("as_owner", asn)
-            
-            db.add(EnrichmentResult(
-                indicator_id=indicator.id,
-                source="virustotal",
-                raw_response=vt_data,
-                malicious_votes=mal,
-                country=vt_country,
-                asn=vt_asn,
-            ))
+            existing = db.execute(select(EnrichmentResult).where(
+                EnrichmentResult.indicator_id == indicator.id,
+                EnrichmentResult.source == "virustotal"
+            )).scalar_one_or_none()
+            if not existing:
+                db.add(EnrichmentResult(
+                    indicator_id=indicator.id,
+                    source="virustotal",
+                    raw_response=vt_data,
+                    malicious_votes=mal,
+                    country=vt_country,
+                    asn=vt_asn,
+                ))
 
         indicator.enrichment_data = enrichment_data
         indicator.status = "enriched"

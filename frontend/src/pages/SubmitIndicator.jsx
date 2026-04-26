@@ -86,7 +86,12 @@ export default function SubmitIndicator() {
       setSubmitted(res.data)
       setForm(defaultForm)
     } catch (err) {
-      setError(err.response?.data?.detail || 'Submission failed')
+      const detail = err.response?.data?.detail
+      if (Array.isArray(detail)) {
+        setError(detail.map((d) => d.msg).join('; '))
+      } else {
+        setError(detail || 'Submission failed')
+      }
     } finally {
       setLoading(false)
     }
@@ -202,7 +207,7 @@ export default function SubmitIndicator() {
 
           <div className="space-y-4">
             <MultiSelect label="Impacted African Countries" options={COUNTRIES} value={form.country_codes} onChange={setArr('country_codes')} />
-            <MultiSelect label="Targeted Sectors" options={SECTORS} value={form.sectors} onChange={setArr('country_codes')} />
+            <MultiSelect label="Targeted Sectors" options={SECTORS} value={form.sectors} onChange={setArr('sectors')} />
             <MultiSelect label="Threat Categories" options={ATTACK_CATS} value={form.attack_categories} onChange={setArr('attack_categories')} />
           </div>
 

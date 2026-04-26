@@ -133,6 +133,23 @@ const TLP_COLORS = {
   RED: 'bg-red-700 text-red-100',
 }
 
+const SOURCE_NAMES = {
+  'virustotal': 'VirusTotal',
+  'abuseipdb': 'AbuseIPDB',
+  'ip-api.com': 'IP-API.COM',
+  'shodan_internetdb': 'Shodan InternetDB',
+  'greynoise': 'GreyNoise',
+  'urlscan.io': 'URLScan.io',
+  'otx': 'AlienVault OTX',
+  'securitytrails': 'SecurityTrails',
+  'emailrep.io': 'EmailRep.io',
+  'malwarebazaar': 'MalwareBazaar',
+}
+
+function formatSourceName(source) {
+  return SOURCE_NAMES[source] || source.toUpperCase()
+}
+
 function Section({ title, icon: Icon, children }) {
   return (
     <div className="bg-dark-800 border border-dark-600 rounded-lg p-5 shadow-lg">
@@ -193,8 +210,25 @@ export default function IndicatorDetail() {
     modified: indicator.last_seen,
   }
 
+  const SEVERITY_COLORS = {
+    Info: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+    Low: 'text-green-400 bg-green-400/10 border-green-400/20',
+    Medium: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
+    High: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
+    Critical: 'text-red-500 bg-red-500/10 border-red-500/20',
+  }
+
+  const uniqueEnrichmentResults = indicator.enrichment_results?.reduce((acc, current) => {
+    const x = acc.find(item => item.source === current.source);
+    if (!x) {
+      return acc.concat([current]);
+    } else {
+      return acc;
+    }
+  }, []) || [];
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Link to="/feed" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm font-medium">
           <ArrowLeft size={16} />
@@ -202,19 +236,37 @@ export default function IndicatorDetail() {
         </Link>
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-dark-800 border border-dark-600 p-6 rounded-xl shadow-xl">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold font-mono break-all text-gray-100">{indicator.value}</h1>
-          <div className="flex items-center gap-2 mt-2 text-gray-400">
-            <span className="uppercase text-xs font-bold tracking-widest bg-dark-700 px-2 py-1 rounded">{indicator.indicator_type}</span>
-            <span className="text-sm">•</span>
-            <span className="text-sm flex items-center gap-1">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-dark-800 border border-dark-600 p-6 rounded-xl shadow-xl">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="uppercase text-[10px] font-bold tracking-widest bg-dark-700 text-primary px-2 py-1 rounded border border-primary/20">{indicator.indicator_type}</span>
+            <span className={`text-[10px] px-2 py-1 rounded border font-bold tracking-tight uppercase ${SEVERITY_COLORS[indicator.severity] || 'bg-dark-600 text-gray-300 border-dark-500'}`}>
+              {indicator.severity} Severity
+            </span>
+          </div>
+          <h1 className="text-2xl md:text-3xl font-bold font-mono break-all text-gray-100">{indicator.value}</h1>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-gray-400">
+            <span className="text-sm flex items-center gap-1.5">
               <Shield size={14} className="text-primary" />
               {indicator.confidence}% Confidence
             </span>
+            <span className="hidden md:block text-gray-600">•</span>
+            <span className="text-sm flex items-center gap-1.5">
+              <Globe size={14} className="text-blue-400" />
+              {(indicator.country_codes || []).join(', ') || 'Global'}
+            </span>
+            <span className="hidden md:block text-gray-600">•</span>
+            <span className="text-sm flex items-center gap-1.5">
+              <Activity size={14} className="text-purple-400" />
+              {(indicator.attack_categories || []).join(', ') || 'General Threat'}
+            </span>
           </div>
         </div>
-        <div className="flex gap-2 flex-shrink-0">
+        <div className="flex items-center gap-3 flex-shrink-0 pt-4 lg:pt-0 border-t lg:border-t-0 border-dark-700">
+          <div className="text-right mr-3 hidden md:block">
+            <p className="text-[10px] text-gray-500 uppercase font-bold">Status</p>
+            <p className="text-sm text-gray-200 capitalize font-medium">{indicator.status}</p>
+          </div>
           <span className={`text-xs px-3 py-1.5 rounded-full font-bold tracking-tight ${TLP_COLORS[indicator.tlp] || 'bg-dark-600 text-gray-300'}`}>
             TLP:{indicator.tlp}
           </span>
@@ -225,67 +277,139 @@ export default function IndicatorDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Section title="Details">
-            <Field label="ID" value={indicator.id} />
-            <Field label="Type" value={indicator.indicator_type} />
-            <Field label="Severity" value={indicator.severity} />
-            <Field label="Confidence" value={`${indicator.confidence}%`} />
-            <Field label="Countries" value={(indicator.country_codes || []).join(', ') || '—'} />
-            <Field label="Sectors" value={(indicator.sectors || []).join(', ') || '—'} />
-            <Field label="Attack Categories" value={(indicator.attack_categories || []).join(', ') || '—'} />
-            <Field label="First Seen" value={new Date(indicator.first_seen).toLocaleString()} />
-            <Field label="Last Seen" value={new Date(indicator.last_seen).toLocaleString()} />
-            <Field label="Created" value={new Date(indicator.created_at).toLocaleString()} />
-            <Field label="STIX ID" value={indicator.stix_id} />
-            {indicator.description && (
-              <div className="py-2">
-                <p className="text-sm text-gray-400 mb-1">Description</p>
-                <p className="text-sm text-gray-200">{indicator.description}</p>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="xl:col-span-2 space-y-6">
+          <Section title="Artefact Threat Intelligence" icon={Info}>
+            <div className="space-y-6">
+              {indicator.description && (
+                <div>
+                  <p className="text-[10px] text-gray-500 uppercase font-bold mb-2 tracking-wider">Description</p>
+                  <p className="text-sm text-gray-300 leading-relaxed italic border-l-2 border-primary/30 pl-4 py-1">
+                    "{indicator.description}"
+                  </p>
+                </div>
+              )}
+
+              <div className={indicator.description ? "pt-4 border-t border-dark-700/50" : ""}>
+                <p className="text-[10px] text-gray-500 uppercase font-bold mb-2 tracking-wider">Metadata</p>
+                <div className="flex flex-col">
+                  <Field label="STIX ID" value={indicator.stix_id} />
+                  <Field label="Target Sectors" value={(indicator.sectors || []).join(', ') || 'All Sectors'} />
+                  <Field label="Attack Context" value={(indicator.attack_categories || []).join(', ') || 'N/A'} />
+                  <Field label="Submitter ID" value={indicator.submitted_by} />
+                </div>
               </div>
-            )}
+              
+              <div className="pt-4 border-t border-dark-700/50">
+                <p className="text-[10px] text-gray-500 uppercase font-bold mb-2 tracking-wider">Timeline</p>
+                <div className="flex flex-col">
+                  <Field label="First Observed" value={new Date(indicator.first_seen).toLocaleString()} icon={Clock} />
+                  <Field label="Last Observed" value={new Date(indicator.last_seen).toLocaleString()} icon={Clock} />
+                  <div className="flex items-center gap-3 py-2">
+                    <span className="text-sm text-gray-400 w-40 flex-shrink-0 flex items-center gap-2">
+                      <Activity size={14} />
+                      Observation Window
+                    </span>
+                    <span className="text-xs text-primary font-bold bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
+                      {Math.ceil(Math.abs(new Date(indicator.last_seen) - new Date(indicator.first_seen)) / (1000 * 60 * 60 * 24))} Days Active
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </Section>
 
-          {indicator.enrichment_results?.length > 0 && (
-            <Section title="Automated Enrichment" icon={Zap}>
-              <div className="space-y-4">
-                {indicator.enrichment_results.map((er) => (
-                  <div key={er.id} className="bg-dark-700/30 border border-dark-600 rounded-lg p-4 transition-hover hover:border-primary/30">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-bold text-primary">{er.source}</span>
-                      <span className="text-xs text-gray-500 flex items-center gap-1">
-                        <Clock size={12} />
-                        {new Date(er.enriched_at).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
-                      {er.country && <Field label="Detected Country" value={er.country} />}
-                      {er.asn && <Field label="ASN" value={er.asn} />}
-                      {er.malicious_votes > 0 && (
-                        <div className="flex items-center gap-2 py-2">
-                          <span className="text-sm text-red-400 font-bold">Malicious Votes: {er.malicious_votes}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
+          {uniqueEnrichmentResults.length > 0 && (
+            <Section title="External Enrichment Data" icon={Zap}>
+              <div className="overflow-x-auto -mx-5 -mb-5 mt-2">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-dark-900/40 border-y border-dark-600/50 text-[10px] text-gray-500 uppercase tracking-widest">
+                      <th className="py-3 px-5 font-bold">Source</th>
+                      <th className="py-3 px-5 font-bold">Detected Country</th>
+                      <th className="py-3 px-5 font-bold">ASN / Network</th>
+                      <th className="py-3 px-5 font-bold">Threat Verdict</th>
+                      <th className="py-3 px-5 font-bold text-right">Last Check</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-dark-700/50">
+                    {uniqueEnrichmentResults.map((er) => (
+                      <tr key={er.id} className="hover:bg-dark-700/30 transition-colors group">
+                        <td className="py-4 px-5">
+                          <span className="text-sm font-bold text-primary group-hover:text-primary-hover">
+                            {formatSourceName(er.source)}
+                          </span>
+                        </td>
+                        <td className="py-4 px-5">
+                          <span className="text-sm text-gray-300">{er.country || '—'}</span>
+                        </td>
+                        <td className="py-4 px-5">
+                          <span className="text-[11px] text-gray-400 font-mono bg-dark-900/50 px-2 py-1 rounded border border-dark-700">
+                            {er.asn || 'N/A'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-5">
+                          {er.malicious_votes > 0 ? (
+                            <span className="inline-flex items-center gap-1.5 text-xs text-red-400 font-bold bg-red-400/10 px-2.5 py-1 rounded-full border border-red-400/20">
+                              <Shield size={10} />
+                              {er.malicious_votes} Malicious Votes
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 text-xs text-green-400 font-medium bg-green-400/10 px-2.5 py-1 rounded-full border border-green-400/20">
+                              <Shield size={10} />
+                              No Issues Found
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-4 px-5 text-right">
+                          <span className="text-[11px] text-gray-500 font-medium">
+                            {new Date(er.enriched_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </Section>
           )}
 
-          <ImpactSection indicatorType={indicator.indicator_type} attackCategories={indicator.attack_categories} />
+          <div className="bg-dark-800 border border-dark-600 rounded-lg p-1 overflow-hidden">
+             <div className="bg-dark-700/50 px-5 py-3 border-b border-dark-600">
+               <h2 className="text-sm font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2">
+                 <Shield size={16} className="text-green-400" />
+                 Impact & Mitigation Strategy
+               </h2>
+             </div>
+             <div className="p-5">
+               <ImpactSection indicatorType={indicator.indicator_type} attackCategories={indicator.attack_categories} />
+             </div>
+          </div>
         </div>
 
         <div className="space-y-6">
-          <Section title="Temporal Context" icon={Calendar}>
-            <Field label="First Seen" value={new Date(indicator.first_seen).toLocaleString()} icon={Clock} />
-            <Field label="Last Seen" value={new Date(indicator.last_seen).toLocaleString()} icon={Clock} />
-            <Field label="Reported At" value={new Date(indicator.created_at).toLocaleString()} icon={Calendar} />
+          <Section title="Quick Actions" icon={Activity}>
+            <div className="space-y-3">
+              <button className="w-full flex items-center justify-start gap-3 text-sm text-gray-300 bg-dark-700 hover:bg-dark-600 rounded-lg px-4 py-2.5 transition-colors border border-dark-600">
+                <FileText size={16} className="text-blue-400" />
+                Generate Report (PDF)
+              </button>
+              <button className="w-full flex items-center justify-start gap-3 text-sm text-gray-300 bg-dark-700 hover:bg-dark-600 rounded-lg px-4 py-2.5 transition-colors border border-dark-600">
+                <Shield size={16} className="text-green-400" />
+                Add to Blocklist
+              </button>
+              <button className="w-full flex items-center justify-start gap-3 text-sm text-gray-300 bg-dark-700 hover:bg-dark-600 rounded-lg px-4 py-2.5 transition-colors border border-dark-600">
+                <Activity size={16} className="text-orange-400" />
+                Investigate in SIEM
+              </button>
+            </div>
           </Section>
 
-          <Section title="Export & API" icon={Database}>
+          <Section title="Data Portability" icon={Database}>
             <div className="space-y-4">
+              <p className="text-xs text-gray-500">
+                Export this indicator in STIX 2.1 format for integration with TIPs and SIEMs.
+              </p>
               <button
                 onClick={() => setShowStix(!showStix)}
                 className="w-full flex items-center justify-center gap-2 text-sm text-primary border border-primary/20 hover:bg-primary/10 rounded-lg py-2 transition-colors"
@@ -293,12 +417,36 @@ export default function IndicatorDetail() {
                 {showStix ? 'Hide' : 'Show'} STIX 2.1 JSON
               </button>
               {showStix && (
-                <pre className="text-[10px] text-gray-400 overflow-auto max-h-96 bg-dark-900 rounded-lg p-3 border border-dark-700">
-                  {JSON.stringify(stixObj, null, 2)}
-                </pre>
+                <div className="relative">
+                   <div className="absolute top-2 right-2 flex gap-2">
+                      <button 
+                        onClick={() => navigator.clipboard.writeText(JSON.stringify(stixObj, null, 2))}
+                        className="p-1.5 bg-dark-700 hover:bg-dark-600 rounded border border-dark-500 text-gray-400 hover:text-white transition-colors"
+                        title="Copy to clipboard"
+                      >
+                        <Database size={12} />
+                      </button>
+                   </div>
+                  <pre className="text-[10px] text-gray-400 font-mono overflow-auto max-h-96 bg-dark-900 rounded-lg p-3 border border-dark-700 custom-scrollbar">
+                    {JSON.stringify(stixObj, null, 2)}
+                  </pre>
+                </div>
               )}
             </div>
           </Section>
+          
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-5">
+             <h3 className="text-xs font-bold text-primary uppercase mb-2">Confidence Rating</h3>
+             <div className="w-full bg-dark-700 h-2 rounded-full overflow-hidden mb-3">
+                <div 
+                  className="bg-primary h-full" 
+                  style={{ width: `${indicator.confidence}%` }}
+                />
+             </div>
+             <p className="text-[11px] text-gray-400 leading-relaxed">
+               This indicator has a confidence score of {indicator.confidence}%, based on its prevalence and verified reporting sources.
+             </p>
+          </div>
         </div>
       </div>
     </div>

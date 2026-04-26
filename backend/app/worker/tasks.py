@@ -1,6 +1,7 @@
 import uuid
 import json
 import logging
+import base64
 from datetime import datetime, timezone
 import httpx
 from sqlalchemy import select
@@ -61,7 +62,6 @@ def enrich_shodan(ip: str) -> dict:
 
 def enrich_abuseipdb(ip: str) -> dict:
     if not settings.ABUSEIPDB_API_KEY:
-        logger.debug("Skipping AbuseIPDB enrichment: ABUSEIPDB_API_KEY not configured")
         return {}
     try:
         with httpx.Client(timeout=10) as client:
@@ -79,7 +79,6 @@ def enrich_abuseipdb(ip: str) -> dict:
 
 def enrich_virustotal(ioc: str, itype: str) -> dict:
     if not settings.VIRUSTOTAL_API_KEY:
-        logger.debug("Skipping VirusTotal enrichment: VIRUSTOTAL_API_KEY not configured")
         return {}
     try:
         with httpx.Client(timeout=15) as client:
@@ -89,7 +88,6 @@ def enrich_virustotal(ioc: str, itype: str) -> dict:
             elif itype == "domain":
                 url = f"https://www.virustotal.com/api/v3/domains/{ioc}"
             elif itype == "url":
-                import base64
                 encoded = base64.urlsafe_b64encode(ioc.encode()).decode().rstrip("=")
                 url = f"https://www.virustotal.com/api/v3/urls/{encoded}"
             elif itype in ("hash_md5", "hash_sha256"):
@@ -101,6 +99,97 @@ def enrich_virustotal(ioc: str, itype: str) -> dict:
                 return resp.json().get("data", {}).get("attributes", {})
     except Exception as e:
         logger.warning(f"VirusTotal error for {ioc}: {e}")
+    return {}
+
+
+def enrich_greynoise(ip: str) -> dict:
+    if not settings.GREYNOISE_API_KEY:
+        return {}
+    try:
+        with httpx.Client(timeout=10) as client:
+            headers = {"key": settings.GREYNOISE_API_KEY, "Accept": "application/json"}
+            resp = client.get(f"https://api.greynoise.io/v3/community/{ip}", headers=headers)
+            if resp.status_code == 200:
+                return resp.json()
+    except Exception as e:
+        logger.warning(f"GreyNoise error for {ip}: {e}")
+    return {}
+
+
+def enrich_urlscan(url: str) -> dict:
+    if not settings.URLSCAN_API_KEY:
+        return {}
+    try:
+        with httpx.Client(timeout=15) as client:
+            headers = {"API-Key": settings.URLSCAN_API_KEY, "Content-Type": "application/json"}
+            data = {"url": url, "visibility": "public"}
+            resp = client.post("https://urlscan.io/api/v1/scan/", headers=headers, json=data)
+            if resp.status_code == 200:
+                return resp.json()
+    except Exception as e:
+        logger.warning(f"urlscan.io error for {url}: {e}")
+    return {}
+
+
+def enrich_otx(ioc: str, itype: str) -> dict:
+    if not settings.OTX_API_KEY:
+        return {}
+    try:
+        otx_type = "IPv4" if itype == "ip" else "domain" if itype == "domain" else "hostname"
+        if itype == "hash_md5" or itype == "hash_sha256": otx_type = "file"
+        
+        url = f"https://otx.alienvault.com/api/v1/indicators/{otx_type}/{ioc}/general"
+        with httpx.Client(timeout=15) as client:
+            headers = {"X-OTX-API-KEY": settings.OTX_API_KEY}
+            resp = client.get(url, headers=headers)
+            if resp.status_code == 200:
+                return resp.json()
+    except Exception as e:
+        logger.warning(f"AlienVault OTX error for {ioc}: {e}")
+    return {}
+
+
+def enrich_securitytrails(ioc: str, itype: str) -> dict:
+    if not settings.SECURITYTRAILS_API_KEY or itype not in ("ip", "domain"):
+        return {}
+    try:
+        endpoint = f"history/{ioc}/dns/a" if itype == "domain" else f"ip/{ioc}"
+        url = f"https://api.securitytrails.com/v1/{endpoint}"
+        with httpx.Client(timeout=10) as client:
+            headers = {"apikey": settings.SECURITYTRAILS_API_KEY}
+            resp = client.get(url, headers=headers)
+            if resp.status_code == 200:
+                return resp.json()
+    except Exception as e:
+        logger.warning(f"SecurityTrails error for {ioc}: {e}")
+    return {}
+
+
+def enrich_emailrep(email: str) -> dict:
+    if not settings.EMAILREP_API_KEY:
+        return {}
+    try:
+        with httpx.Client(timeout=10) as client:
+            headers = {"Key": settings.EMAILREP_API_KEY, "User-Agent": "threatmap-africa"}
+            resp = client.get(f"https://emailrep.io/{email}", headers=headers)
+            if resp.status_code == 200:
+                return resp.json()
+    except Exception as e:
+        logger.warning(f"EmailRep error for {email}: {e}")
+    return {}
+
+
+def enrich_malwarebazaar(ioc: str, itype: str) -> dict:
+    if itype not in ("hash_md5", "hash_sha256"):
+        return {}
+    try:
+        with httpx.Client(timeout=10) as client:
+            data = {"query": "get_info", "hash": ioc}
+            resp = client.post("https://mb-api.abuse.ch/api/v1/", data=data)
+            if resp.status_code == 200:
+                return resp.json()
+    except Exception as e:
+        logger.warning(f"MalwareBazaar error for {ioc}: {e}")
     return {}
 
 
@@ -210,6 +299,7 @@ def enrich_indicator(self, indicator_id: str):
                         asn=asn,
                     ))
 
+        # VirusTotal
         vt_data = enrich_virustotal(value, itype)
         if vt_data:
             stats = vt_data.get("last_analysis_stats", {})
@@ -230,6 +320,119 @@ def enrich_indicator(self, indicator_id: str):
                     country=vt_country,
                     asn=vt_asn,
                 ))
+
+        # GreyNoise
+        if itype == "ip" and not is_private(value):
+            gn_data = enrich_greynoise(value)
+            if gn_data:
+                enrichment_data["greynoise"] = gn_data
+                existing = db.execute(select(EnrichmentResult).where(
+                    EnrichmentResult.indicator_id == indicator.id,
+                    EnrichmentResult.source == "greynoise"
+                )).scalar_one_or_none()
+                if not existing:
+                    db.add(EnrichmentResult(
+                        indicator_id=indicator.id,
+                        source="greynoise",
+                        raw_response=gn_data,
+                        malicious_votes=1 if gn_data.get("classification") == "malicious" else 0,
+                        country=gn_data.get("country", country),
+                        asn=gn_data.get("metadata", {}).get("asn", asn),
+                    ))
+
+        # AlienVault OTX
+        otx_data = enrich_otx(value, itype)
+        if otx_data:
+            enrichment_data["otx"] = otx_data
+            existing = db.execute(select(EnrichmentResult).where(
+                EnrichmentResult.indicator_id == indicator.id,
+                EnrichmentResult.source == "otx"
+            )).scalar_one_or_none()
+            if not existing:
+                db.add(EnrichmentResult(
+                    indicator_id=indicator.id,
+                    source="otx",
+                    raw_response=otx_data,
+                    malicious_votes=len(otx_data.get("pulse_info", {}).get("pulses", [])),
+                    country=country,
+                    asn=asn,
+                ))
+
+        # SecurityTrails
+        if itype in ("ip", "domain"):
+            st_data = enrich_securitytrails(value, itype)
+            if st_data:
+                enrichment_data["securitytrails"] = st_data
+                existing = db.execute(select(EnrichmentResult).where(
+                    EnrichmentResult.indicator_id == indicator.id,
+                    EnrichmentResult.source == "securitytrails"
+                )).scalar_one_or_none()
+                if not existing:
+                    db.add(EnrichmentResult(
+                        indicator_id=indicator.id,
+                        source="securitytrails",
+                        raw_response=st_data,
+                        malicious_votes=0,
+                        country=country,
+                        asn=asn,
+                    ))
+
+        # urlscan.io
+        if itype == "url":
+            us_data = enrich_urlscan(value)
+            if us_data:
+                enrichment_data["urlscan"] = us_data
+                existing = db.execute(select(EnrichmentResult).where(
+                    EnrichmentResult.indicator_id == indicator.id,
+                    EnrichmentResult.source == "urlscan.io"
+                )).scalar_one_or_none()
+                if not existing:
+                    db.add(EnrichmentResult(
+                        indicator_id=indicator.id,
+                        source="urlscan.io",
+                        raw_response=us_data,
+                        malicious_votes=0,
+                        country=country,
+                        asn=asn,
+                    ))
+
+        # EmailRep
+        if itype == "email":
+            er_data = enrich_emailrep(value)
+            if er_data:
+                enrichment_data["emailrep"] = er_data
+                existing = db.execute(select(EnrichmentResult).where(
+                    EnrichmentResult.indicator_id == indicator.id,
+                    EnrichmentResult.source == "emailrep.io"
+                )).scalar_one_or_none()
+                if not existing:
+                    db.add(EnrichmentResult(
+                        indicator_id=indicator.id,
+                        source="emailrep.io",
+                        raw_response=er_data,
+                        malicious_votes=1 if er_data.get("reputation") == "poor" else 0,
+                        country=country,
+                        asn=asn,
+                    ))
+
+        # MalwareBazaar
+        if itype in ("hash_md5", "hash_sha256"):
+            mb_data = enrich_malwarebazaar(value, itype)
+            if mb_data and mb_data.get("query_status") == "ok":
+                enrichment_data["malwarebazaar"] = mb_data
+                existing = db.execute(select(EnrichmentResult).where(
+                    EnrichmentResult.indicator_id == indicator.id,
+                    EnrichmentResult.source == "malwarebazaar"
+                )).scalar_one_or_none()
+                if not existing:
+                    db.add(EnrichmentResult(
+                        indicator_id=indicator.id,
+                        source="malwarebazaar",
+                        raw_response=mb_data,
+                        malicious_votes=1,
+                        country=country,
+                        asn=asn,
+                    ))
 
         indicator.enrichment_data = enrichment_data
         indicator.status = "enriched"

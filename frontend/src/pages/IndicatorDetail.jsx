@@ -3,6 +3,129 @@ import { useParams, Link } from 'react-router-dom'
 import { indicatorsApi } from '../api/client'
 import { ArrowLeft, Shield, Info, Activity, Database, FileText, Calendar, Clock, Globe, Zap } from 'lucide-react'
 
+const AFFECTED_SYSTEMS = {
+  ip: ['Firewalls & network perimeter devices', 'SIEM / log aggregation systems', 'Endpoint detection & response (EDR) agents', 'VPN gateways', 'Web application firewalls (WAF)'],
+  domain: ['DNS resolvers & recursive servers', 'Email gateways (MX records)', 'Web proxies & content filters', 'Browser-based endpoints', 'Certificate transparency monitors'],
+  url: ['Web browsers on user endpoints', 'Email clients that render HTML', 'Web proxies & URL filtering systems', 'Mobile apps with embedded web views'],
+  hash_md5: ['Endpoint antivirus / EDR solutions', 'File integrity monitoring (FIM) systems', 'Email attachment scanners', 'Cloud storage & file-sharing platforms'],
+  hash_sha256: ['Endpoint antivirus / EDR solutions', 'File integrity monitoring (FIM) systems', 'Email attachment scanners', 'Cloud storage & file-sharing platforms'],
+  email: ['Email gateways & spam filters', 'User inboxes (phishing target)', 'Identity & access management (IAM) systems', 'HR & finance systems (BEC target)'],
+}
+
+const CATEGORY_ACTIONS = {
+  'Phishing': [
+    'Block the indicator at your email gateway and DNS layer immediately.',
+    'Notify users who may have received emails from this source.',
+    'Enable multi-factor authentication (MFA) on all user accounts.',
+    'Run a mailbox search to identify any delivered messages and quarantine them.',
+  ],
+  'Business Email Compromise': [
+    'Alert finance and HR teams to verify any pending wire transfers or payroll changes.',
+    'Block the sender domain/IP at the email gateway.',
+    'Implement DMARC, DKIM, and SPF on your mail domain.',
+    'Require out-of-band (phone) confirmation for financial transactions.',
+  ],
+  'Mobile Money Fraud': [
+    'Report the indicator to the relevant mobile money operator (MTN, M-Pesa, Airtel Money, etc.).',
+    'Block associated IPs/domains at the API gateway level.',
+    'Review transaction logs for anomalous small-value probing transactions.',
+    'Enforce rate limiting and device-binding on mobile money APIs.',
+  ],
+  'SIM Swap': [
+    'Alert telecom fraud teams to flag the associated number/account.',
+    'Disable SMS-based OTP for high-risk accounts; switch to authenticator apps.',
+    'Audit recent SIM swap requests in your subscriber management system.',
+    'Implement additional identity verification steps for SIM change requests.',
+  ],
+  'Ransomware': [
+    'Isolate any hosts that communicated with this indicator immediately.',
+    'Block the indicator at firewall, DNS, and proxy layers.',
+    'Verify offline backups are intact and untouched.',
+    'Hunt for lateral movement using EDR telemetry across the environment.',
+  ],
+  'Data Exfiltration': [
+    'Block outbound connections to this indicator at the firewall.',
+    'Review DLP alerts for large or unusual data transfers to this destination.',
+    'Audit access logs for sensitive data stores (databases, file shares, S3 buckets).',
+    'Rotate credentials for any accounts that may have been compromised.',
+  ],
+  'DDoS': [
+    'Activate upstream DDoS mitigation / scrubbing service.',
+    'Block the source IP ranges at the network edge.',
+    'Enable rate limiting and geo-blocking where appropriate.',
+    'Notify your ISP and coordinate null-routing if volumetric.',
+  ],
+  'SSH Brute Force': [
+    'Block the source IP at the firewall and fail2ban immediately.',
+    'Disable password-based SSH authentication; enforce key-based auth only.',
+    'Move SSH to a non-standard port or restrict access via VPN.',
+    'Audit /var/log/auth.log for any successful logins from this IP.',
+  ],
+  'Credential Stuffing': [
+    'Block the source IP at your WAF and application layer.',
+    'Force password resets for accounts targeted during the attack window.',
+    'Enable MFA on all user-facing login endpoints.',
+    'Implement CAPTCHA and account lockout policies.',
+  ],
+  'Malware Distribution': [
+    'Block the URL/domain/IP at DNS, proxy, and email gateway.',
+    'Scan endpoints for the associated file hash using EDR.',
+    'Alert users who may have visited the URL or downloaded the file.',
+    'Submit the sample to your AV vendor for signature update.',
+  ],
+  'SQL Injection': [
+    'Block the source IP at the WAF immediately.',
+    'Review web application logs for successful injection attempts.',
+    'Audit database query logs for unexpected data access or exfiltration.',
+    'Patch the vulnerable endpoint and enforce parameterised queries.',
+  ],
+  'API Abuse': [
+    'Revoke and rotate any API keys that may have been exposed.',
+    'Enforce rate limiting and IP allowlisting on sensitive API endpoints.',
+    'Review API access logs for data harvesting patterns.',
+    'Implement OAuth scopes to limit what each key can access.',
+  ],
+}
+
+const DEFAULT_ACTIONS = [
+  'Block the indicator at your firewall, DNS resolver, and email gateway.',
+  'Search your SIEM for any historical hits against this indicator.',
+  'Notify your incident response team and open a tracking ticket.',
+  'Share the indicator with your sector ISAC or national CERT.',
+]
+
+function ImpactSection({ indicatorType, attackCategories }) {
+  const systems = AFFECTED_SYSTEMS[indicatorType] || []
+  const actions = attackCategories?.length
+    ? [...new Set(attackCategories.flatMap((c) => CATEGORY_ACTIONS[c] || DEFAULT_ACTIONS))]
+    : DEFAULT_ACTIONS
+
+  return (
+    <div className="grid md:grid-cols-2 gap-4">
+      <div className="bg-dark-800 border border-orange-800/50 rounded-lg p-5">
+        <h2 className="text-sm font-semibold text-orange-300 uppercase tracking-wide mb-3">⚠️ Systems That Could Be Affected</h2>
+        <ul className="space-y-2">
+          {systems.map((s) => (
+            <li key={s} className="flex items-start gap-2 text-sm text-gray-300">
+              <span className="text-orange-400 mt-0.5 flex-shrink-0">▸</span>{s}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="bg-dark-800 border border-green-800/50 rounded-lg p-5">
+        <h2 className="text-sm font-semibold text-green-300 uppercase tracking-wide mb-3">🛡️ Actionable Protection Steps</h2>
+        <ol className="space-y-2">
+          {actions.map((a, i) => (
+            <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
+              <span className="text-green-400 font-bold flex-shrink-0">{i + 1}.</span>{a}
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  )
+}
+
 const TLP_COLORS = {
   WHITE: 'bg-gray-200 text-gray-800',
   GREEN: 'bg-green-700 text-green-100',
@@ -102,21 +225,25 @@ export default function IndicatorDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Section title="Intelligence Details" icon={Info}>
-            <Field label="STIX ID" value={indicator.stix_id} icon={FileText} />
-            <Field label="Indicator Type" value={indicator.indicator_type} icon={Activity} />
-            <Field label="Target Countries" value={(indicator.country_codes || []).join(', ') || '—'} icon={Globe} />
-            <Field label="Impacted Sectors" value={(indicator.sectors || []).join(', ') || '—'} icon={Database} />
-            <Field label="Attack Categories" value={(indicator.attack_categories || []).join(', ') || '—'} icon={Zap} />
-          </Section>
-
-          {indicator.description && (
-            <Section title="Description" icon={FileText}>
-              <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">{indicator.description}</p>
-            </Section>
-          )}
+      <Section title="Details">
+        <Field label="ID" value={indicator.id} />
+        <Field label="Type" value={indicator.indicator_type} />
+        <Field label="Severity" value={indicator.severity} />
+        <Field label="Confidence" value={`${indicator.confidence}%`} />
+        <Field label="Countries" value={(indicator.country_codes || []).join(', ') || '—'} />
+        <Field label="Sectors" value={(indicator.sectors || []).join(', ') || '—'} />
+        <Field label="Attack Categories" value={(indicator.attack_categories || []).join(', ') || '—'} />
+        <Field label="First Seen" value={new Date(indicator.first_seen).toLocaleString()} />
+        <Field label="Last Seen" value={new Date(indicator.last_seen).toLocaleString()} />
+        <Field label="Created" value={new Date(indicator.created_at).toLocaleString()} />
+        <Field label="STIX ID" value={indicator.stix_id} />
+        {indicator.description && (
+          <div className="py-2">
+            <p className="text-sm text-gray-400 mb-1">Description</p>
+            <p className="text-sm text-gray-200">{indicator.description}</p>
+          </div>
+        )}
+      </Section>
 
           {indicator.enrichment_results?.length > 0 && (
             <Section title="Automated Enrichment" icon={Zap}>

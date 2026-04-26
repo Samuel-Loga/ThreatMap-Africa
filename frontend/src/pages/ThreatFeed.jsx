@@ -9,16 +9,17 @@ const PAGE_SIZE = 20
 export default function ThreatFeed() {
   const [indicators, setIndicators] = useState([])
   const [filters, setFilters] = useState({})
+  const [search, setSearch] = useState('')
   const [offset, setOffset] = useState(0)
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [liveNotification, setLiveNotification] = useState(null)
   const wsRef = useRef(null)
 
-  const fetchIndicators = useCallback(async (newFilters, newOffset) => {
+  const fetchIndicators = useCallback(async (currentFilters, currentSearch, newOffset) => {
     setLoading(true)
     try {
-      const params = { limit: PAGE_SIZE, offset: newOffset, ...newFilters }
+      const params = { limit: PAGE_SIZE, offset: newOffset, ...currentFilters, search: currentSearch }
       Object.keys(params).forEach((k) => !params[k] && delete params[k])
       const res = await indicatorsApi.list(params)
       const data = res.data
@@ -37,8 +38,11 @@ export default function ThreatFeed() {
 
   useEffect(() => {
     setOffset(0)
-    fetchIndicators(filters, 0)
-  }, [filters, fetchIndicators])
+    const timeout = setTimeout(() => {
+      fetchIndicators(filters, search, 0)
+    }, 300)
+    return () => clearTimeout(timeout)
+  }, [filters, search, fetchIndicators])
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
@@ -70,7 +74,7 @@ export default function ThreatFeed() {
   const loadMore = () => {
     const newOffset = offset + PAGE_SIZE
     setOffset(newOffset)
-    fetchIndicators(filters, newOffset)
+    fetchIndicators(filters, search, newOffset)
   }
 
   return (
@@ -88,7 +92,15 @@ export default function ThreatFeed() {
             <Bell size={16} />
             {liveNotification}
           </div>
-        )}
+        </div>
+        
+        <div className="flex items-center gap-3">
+          {liveNotification && (
+            <div className="bg-green-900/30 border border-green-700 text-green-300 text-[10px] px-3 py-1.5 rounded animate-pulse whitespace-nowrap">
+              🔔 {liveNotification}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex gap-4">

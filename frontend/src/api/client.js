@@ -35,6 +35,12 @@ export const authApi = {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     })
   },
+  me: () => client.get('/auth/me'),
+  updateMe: (data) => client.patch('/auth/me', data),
+  setup2fa: () => client.post('/auth/2fa/setup'),
+  verifySetup2fa: (code) => client.post('/auth/2fa/verify-setup', { code }),
+  verify2fa: (pre_auth_token, code) => client.post('/auth/2fa/verify', { pre_auth_token, code }),
+  disable2fa: (password) => client.post('/auth/2fa/disable', { password }),
 }
 
 export const indicatorsApi = {

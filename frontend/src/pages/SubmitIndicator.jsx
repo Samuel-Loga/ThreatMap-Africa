@@ -9,7 +9,7 @@ const COUNTRIES = [
   "GW","KM","LR","LS","LY","MG","ML","MR","MU","MW","MZ","NA","NE","SC","SD",
   "SL","SO","SS","ST","SZ","TD","TG","TN","ZW",
 ]
-const SECTORS = ["banking","telecommunications","government","healthcare","energy","retail","ngo","education"]
+const SECTORS = ["Banking","Telecommunications","Government","Healthcare","Energy","Retail","NGO","Education"]
 const ATTACK_CATS = [
   "Phishing", "Business Email Compromise", "Mobile Money Fraud", "SIM Swap", 
   "Ransomware", "Data Exfiltration", "DDoS", "SSH Brute Force", 
@@ -87,7 +87,12 @@ export default function SubmitIndicator() {
       setSubmitted(res.data)
       setForm(defaultForm)
     } catch (err) {
-      setError(err.response?.data?.detail || 'Submission failed')
+      const detail = err.response?.data?.detail
+      if (Array.isArray(detail)) {
+        setError(detail.map((d) => d.msg).join('; '))
+      } else {
+        setError(detail || 'Submission failed')
+      }
     } finally {
       setLoading(false)
     }
@@ -151,7 +156,7 @@ export default function SubmitIndicator() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className={labelClass}>Indicator Type *</label>
+              <label className={labelClass}>Type *</label>
               <select className={inputClass} value={form.indicator_type} onChange={set('indicator_type')}>
                 {INDICATOR_TYPES.map((t) => <option key={t} value={t}>{t.toUpperCase()}</option>)}
               </select>
@@ -214,7 +219,7 @@ export default function SubmitIndicator() {
 
           <div className="space-y-4">
             <MultiSelect label="Impacted African Countries" options={COUNTRIES} value={form.country_codes} onChange={setArr('country_codes')} />
-            <MultiSelect label="Targeted Sectors" options={SECTORS} value={form.sectors} onChange={setArr('country_codes')} />
+            <MultiSelect label="Targeted Sectors" options={SECTORS} value={form.sectors} onChange={setArr('sectors')} />
             <MultiSelect label="Threat Categories" options={ATTACK_CATS} value={form.attack_categories} onChange={setArr('attack_categories')} />
           </div>
 

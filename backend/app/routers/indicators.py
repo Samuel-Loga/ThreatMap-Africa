@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, func
+from sqlalchemy import select, and_, or_, func
 from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.models import Indicator, User
@@ -76,6 +76,7 @@ async def create_indicator(
         indicator_type=indicator_in.indicator_type,
         value=indicator_in.value,
         tlp=indicator_in.tlp,
+        severity=indicator_in.severity,
         confidence=indicator_in.confidence,
         country_codes=indicator_in.country_codes,
         sectors=indicator_in.sectors,
@@ -93,6 +94,8 @@ async def create_indicator(
     await db.refresh(indicator)
 
     enrich_indicator.delay(str(indicator.id))
+    from app.worker.tasks import calculate_user_reputation
+    calculate_user_reputation.delay(str(current_user.id))
 
     return indicator
 
@@ -104,6 +107,9 @@ async def list_indicators(
     attack_category: Optional[str] = Query(None),
     indicator_type: Optional[str] = Query(None),
     tlp: Optional[str] = Query(None),
+    severity: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    submitted_by: Optional[uuid.UUID] = Query(None),
     since: Optional[datetime] = Query(None),
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
@@ -116,6 +122,8 @@ async def list_indicators(
         filters.append(Indicator.indicator_type == indicator_type)
     if tlp:
         filters.append(Indicator.tlp == tlp)
+    if severity:
+        filters.append(Indicator.severity == severity)
     if since:
         filters.append(Indicator.created_at >= since)
     if country:
@@ -124,6 +132,19 @@ async def list_indicators(
         filters.append(Indicator.sectors.any(sector))
     if attack_category:
         filters.append(Indicator.attack_categories.any(attack_category))
+    if submitted_by:
+        filters.append(Indicator.submitted_by == submitted_by)
+    
+    if search:
+        search_filter = or_(
+            Indicator.value.ilike(f"%{search}%"),
+            Indicator.description.ilike(f"%{search}%"),
+            Indicator.stix_id.ilike(f"%{search}%"),
+            Indicator.sectors.any(search),
+            Indicator.attack_categories.any(search),
+        )
+        filters.append(search_filter)
+
     if filters:
         stmt = stmt.where(and_(*filters))
     stmt = stmt.order_by(Indicator.created_at.desc()).limit(limit).offset(offset)

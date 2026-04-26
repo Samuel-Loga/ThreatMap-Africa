@@ -3,6 +3,16 @@ import { authApi } from '../api/client'
 
 const AuthContext = createContext(null)
 
+function parseToken(token) {
+  const payload = JSON.parse(atob(token.split('.')[1]))
+  return {
+    id: payload.sub,
+    role: payload.role,
+    username: payload.username,
+    onboarding_completed: payload.onboarding_completed ?? false,
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
@@ -15,10 +25,24 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     const res = await authApi.login(email, password)
+    // 2FA required — return the flag without storing a token
+    if (res.data.requires_2fa) {
+      return { requires_2fa: true, pre_auth_token: res.data.pre_auth_token }
+    }
     const token = res.data.access_token
+    const userData = { ...parseToken(token), email }
     localStorage.setItem('access_token', token)
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    const userData = { id: payload.sub, role: payload.role, email }
+    localStorage.setItem('user', JSON.stringify(userData))
+    setUser(userData)
+    return userData
+  }, [])
+
+  const finalizeLogin = useCallback(async (preAuthToken, code) => {
+    const res = await authApi.verify2fa(preAuthToken, code)
+    const token = res.data.access_token
+    // We don't have email here, fetch it after
+    const userData = { ...parseToken(token) }
+    localStorage.setItem('access_token', token)
     localStorage.setItem('user', JSON.stringify(userData))
     setUser(userData)
     return userData
@@ -31,7 +55,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, setUser, login, finalizeLogin, logout }}>
       {children}
     </AuthContext.Provider>
   )

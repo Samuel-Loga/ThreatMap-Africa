@@ -8,6 +8,8 @@ from app.worker.celery_app import celery_app
 from app.database import SyncSessionLocal
 from app.models import Indicator, EnrichmentResult
 from app.config import settings
+from app.worker.notifications import process_instant_notifications, process_summary_notifications
+from app.worker.reputation import update_user_reputation
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +119,26 @@ def broadcast_ws_event(indicator_id: str, status: str, enrichment_data: dict):
         logger.warning(f"WebSocket broadcast error: {e}")
 
 
+@celery_app.task(name="send_instant_notifications")
+def send_instant_notifications(indicator_id: str):
+    process_instant_notifications(indicator_id)
+
+
+@celery_app.task(name="send_daily_summary")
+def send_daily_summary():
+    process_summary_notifications("daily")
+
+
+@celery_app.task(name="send_weekly_summary")
+def send_weekly_summary():
+    process_summary_notifications("weekly")
+
+
+@celery_app.task(name="calculate_user_reputation")
+def calculate_user_reputation(user_id: str):
+    update_user_reputation(user_id)
+
+
 @celery_app.task(name="enrich_indicator", bind=True, max_retries=2)
 def enrich_indicator(self, indicator_id: str):
     with SyncSessionLocal() as db:
@@ -129,73 +151,90 @@ def enrich_indicator(self, indicator_id: str):
         itype = indicator.indicator_type
         value = indicator.value
         enrichment_data = {}
-        malicious_votes = 0
         country = ""
         asn = ""
 
+        # Base IP enrichment
         if itype == "ip" and not is_private(value):
             ip_data = enrich_ip_api(value)
             if ip_data:
                 country = ip_data.get("country", "")
                 asn = ip_data.get("as", "")
                 enrichment_data["ip_api"] = ip_data
-                er = EnrichmentResult(
-                    indicator_id=indicator.id,
-                    source="ip-api.com",
-                    raw_response=ip_data,
-                    malicious_votes=0,
-                    country=country,
-                    asn=asn,
-                )
-                db.add(er)
+                existing = db.execute(select(EnrichmentResult).where(
+                    EnrichmentResult.indicator_id == indicator.id,
+                    EnrichmentResult.source == "ip-api.com"
+                )).scalar_one_or_none()
+                if not existing:
+                    db.add(EnrichmentResult(
+                        indicator_id=indicator.id,
+                        source="ip-api.com",
+                        raw_response=ip_data,
+                        malicious_votes=0,
+                        country=country,
+                        asn=asn,
+                    ))
 
             shodan_data = enrich_shodan(value)
             if shodan_data:
                 enrichment_data["shodan"] = shodan_data
-                er = EnrichmentResult(
-                    indicator_id=indicator.id,
-                    source="shodan_internetdb",
-                    raw_response=shodan_data,
-                    malicious_votes=len(shodan_data.get("vulns", [])),
-                    country=country,
-                    asn=asn,
-                )
-                db.add(er)
+                existing = db.execute(select(EnrichmentResult).where(
+                    EnrichmentResult.indicator_id == indicator.id,
+                    EnrichmentResult.source == "shodan_internetdb"
+                )).scalar_one_or_none()
+                if not existing:
+                    db.add(EnrichmentResult(
+                        indicator_id=indicator.id,
+                        source="shodan_internetdb",
+                        raw_response=shodan_data,
+                        malicious_votes=len(shodan_data.get("vulns", [])),
+                        country=country,
+                        asn=asn,
+                    ))
 
             abuse_data = enrich_abuseipdb(value)
             if abuse_data:
                 votes = abuse_data.get("abuseConfidenceScore", 0)
-                malicious_votes = max(malicious_votes, votes)
                 enrichment_data["abuseipdb"] = abuse_data
-                er = EnrichmentResult(
-                    indicator_id=indicator.id,
-                    source="abuseipdb",
-                    raw_response=abuse_data,
-                    malicious_votes=votes,
-                    country=abuse_data.get("countryCode", country),
-                    asn=asn,
-                )
-                db.add(er)
+                existing = db.execute(select(EnrichmentResult).where(
+                    EnrichmentResult.indicator_id == indicator.id,
+                    EnrichmentResult.source == "abuseipdb"
+                )).scalar_one_or_none()
+                if not existing:
+                    db.add(EnrichmentResult(
+                        indicator_id=indicator.id,
+                        source="abuseipdb",
+                        raw_response=abuse_data,
+                        malicious_votes=votes,
+                        country=abuse_data.get("countryCode", country),
+                        asn=asn,
+                    ))
 
         vt_data = enrich_virustotal(value, itype)
         if vt_data:
             stats = vt_data.get("last_analysis_stats", {})
             mal = stats.get("malicious", 0)
-            malicious_votes = max(malicious_votes, mal)
             enrichment_data["virustotal"] = vt_data
-            er = EnrichmentResult(
-                indicator_id=indicator.id,
-                source="virustotal",
-                raw_response=vt_data,
-                malicious_votes=mal,
-                country=country,
-                asn=asn,
-            )
-            db.add(er)
+            vt_country = vt_data.get("country", country)
+            vt_asn = vt_data.get("as_owner", asn)
+            existing = db.execute(select(EnrichmentResult).where(
+                EnrichmentResult.indicator_id == indicator.id,
+                EnrichmentResult.source == "virustotal"
+            )).scalar_one_or_none()
+            if not existing:
+                db.add(EnrichmentResult(
+                    indicator_id=indicator.id,
+                    source="virustotal",
+                    raw_response=vt_data,
+                    malicious_votes=mal,
+                    country=vt_country,
+                    asn=vt_asn,
+                ))
 
         indicator.enrichment_data = enrichment_data
         indicator.status = "enriched"
         db.commit()
 
     broadcast_ws_event(indicator_id, "enriched", enrichment_data)
+    send_instant_notifications.delay(indicator_id)
     logger.info(f"Enrichment complete for indicator {indicator_id}")

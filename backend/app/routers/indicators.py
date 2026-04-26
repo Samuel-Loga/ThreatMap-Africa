@@ -109,6 +109,7 @@ async def list_indicators(
     tlp: Optional[str] = Query(None),
     severity: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
+    submitted_by: Optional[uuid.UUID] = Query(None),
     since: Optional[datetime] = Query(None),
     submitted_by: Optional[uuid.UUID] = Query(None),
     limit: int = Query(50, ge=1, le=500),

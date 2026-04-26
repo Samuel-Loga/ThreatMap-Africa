@@ -128,7 +128,7 @@ class IndicatorCreate(BaseModel):
     indicator_type: str
     value: str
     tlp: str = "GREEN"
-    severity: str = "Low"
+    severity: str = "Medium"
     confidence: int = Field(50, ge=0, le=100)
     country_codes: list[str] = []
     sectors: list[str] = []

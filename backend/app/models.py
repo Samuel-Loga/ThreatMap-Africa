@@ -61,6 +61,7 @@ class Indicator(Base):
     country_codes: Mapped[list] = mapped_column(ARRAY(String), default=list, nullable=False)
     sectors: Mapped[list] = mapped_column(ARRAY(String), default=list, nullable=False)
     attack_categories: Mapped[list] = mapped_column(ARRAY(String), default=list, nullable=False)
+    severity: Mapped[str] = mapped_column(String(20), default="Medium", nullable=False, index=True)
     description: Mapped[str] = mapped_column(Text, default="", nullable=False)
     first_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     last_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)

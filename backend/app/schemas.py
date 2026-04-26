@@ -1,8 +1,8 @@
 import uuid
+import re
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, EmailStr, Field, field_validator
-import re
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 
 INDICATOR_TYPES = ["ip", "domain", "url", "hash_md5", "hash_sha256", "email"]
@@ -195,7 +195,8 @@ class IndicatorCreate(BaseModel):
                 raise ValueError(f"Attack category {a} is not valid")
         return v
 
-    def validate_value_format(self):
+    @model_validator(mode="after")
+    def validate_value_format(self) -> "IndicatorCreate":
         t = self.indicator_type
         v = self.value
         if t == "ip" and not IP_REGEX.match(v):
@@ -211,6 +212,7 @@ class IndicatorCreate(BaseModel):
             raise ValueError("Invalid SHA256 hash format (must be 64 hex chars)")
         elif t == "email" and not is_valid_email(v):
             raise ValueError("Invalid email format")
+        return self
 
 
 class EnrichmentResultOut(BaseModel):

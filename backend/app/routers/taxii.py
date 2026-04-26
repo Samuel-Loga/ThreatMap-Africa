@@ -1,8 +1,9 @@
 import uuid
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
-from app.database import SyncSessionLocal
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.database import get_db
 from app.models import Indicator
 
 router = APIRouter(prefix="/taxii", tags=["taxii"])
@@ -45,13 +46,12 @@ async def list_collections():
 
 
 @router.get("/collections/{collection_id}/objects/")
-async def get_objects(collection_id: str):
+async def get_objects(collection_id: str, db: AsyncSession = Depends(get_db)):
     if collection_id != COLLECTION_ID:
         return JSONResponse(content={"objects": []}, media_type=TAXII_MEDIA_TYPE)
 
-    with SyncSessionLocal() as db:
-        result = db.execute(select(Indicator).order_by(Indicator.created_at.desc()).limit(100))
-        indicators = result.scalars().all()
+    result = await db.execute(select(Indicator).order_by(Indicator.created_at.desc()).limit(100))
+    indicators = result.scalars().all()
 
     objects = []
     for ind in indicators:

@@ -40,9 +40,16 @@ export function AuthProvider({ children }) {
   const finalizeLogin = useCallback(async (preAuthToken, code) => {
     const res = await authApi.verify2fa(preAuthToken, code)
     const token = res.data.access_token
-    // We don't have email here, fetch it after
-    const userData = { ...parseToken(token) }
     localStorage.setItem('access_token', token)
+    
+    // Fetch full user data to get email and other fields not in token
+    const userRes = await authApi.me()
+    const userData = {
+      ...parseToken(token),
+      email: userRes.data.email,
+      ...userRes.data
+    }
+    
     localStorage.setItem('user', JSON.stringify(userData))
     setUser(userData)
     return userData

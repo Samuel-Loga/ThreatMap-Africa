@@ -31,7 +31,7 @@ export const authApi = {
     const form = new URLSearchParams()
     form.append('username', email)
     form.append('password', password)
-    return axios.post('/api/v1/auth/token', form, {
+    return client.post('/auth/token', form, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     })
   },

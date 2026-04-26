@@ -57,7 +57,6 @@ class Indicator(Base):
     indicator_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     value: Mapped[str] = mapped_column(Text, nullable=False)
     tlp: Mapped[str] = mapped_column(String(10), default="GREEN", nullable=False, index=True)
-    severity: Mapped[str] = mapped_column(String(20), default="Low", nullable=False, index=True)
     confidence: Mapped[int] = mapped_column(Integer, default=50, nullable=False)
     country_codes: Mapped[list] = mapped_column(ARRAY(String), default=list, nullable=False)
     sectors: Mapped[list] = mapped_column(ARRAY(String), default=list, nullable=False)

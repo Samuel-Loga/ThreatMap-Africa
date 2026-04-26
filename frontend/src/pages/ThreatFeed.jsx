@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { indicatorsApi } from '../api/client'
 import ThreatCard from '../components/ThreatCard'
 import FilterPanel from '../components/FilterPanel'
-import { Bell, RefreshCw } from 'lucide-react'
+import { Bell, RefreshCw, Search } from 'lucide-react'
 
 const PAGE_SIZE = 20
 
@@ -79,7 +79,7 @@ export default function ThreatFeed() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             Threat Feed
@@ -87,17 +87,21 @@ export default function ThreatFeed() {
           </h1>
           <p className="text-gray-400 mt-1">Live African threat indicators</p>
         </div>
-        {liveNotification && (
-          <div className="bg-green-900/30 border border-green-700 text-green-300 text-sm px-4 py-2 rounded flex items-center gap-2 animate-pulse">
-            <Bell size={16} />
-            {liveNotification}
-          </div>
-        </div>
-        
         <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+            <input
+              type="text"
+              placeholder="Search indicators..."
+              className="bg-dark-800 border border-dark-600 rounded-lg pl-10 pr-4 py-2 text-sm text-gray-200 focus:outline-none focus:border-primary w-64"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
           {liveNotification && (
-            <div className="bg-green-900/30 border border-green-700 text-green-300 text-[10px] px-3 py-1.5 rounded animate-pulse whitespace-nowrap">
-              🔔 {liveNotification}
+            <div className="bg-green-900/30 border border-green-700 text-green-300 text-sm px-4 py-2 rounded flex items-center gap-2 animate-pulse whitespace-nowrap">
+              <Bell size={16} />
+              {liveNotification}
             </div>
           )}
         </div>

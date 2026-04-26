@@ -54,6 +54,7 @@ function toTitleCase(str) {
 
 export default function ThreatCard({ indicator }) {
   const { id, indicator_type, value, tlp, severity, confidence, country_codes, sectors, attack_categories, description, created_at, status } = indicator
+  const Icon = TYPE_ICONS[indicator_type] || Search
 
   return (
     <Link to={`/indicators/${id}`} className="block">

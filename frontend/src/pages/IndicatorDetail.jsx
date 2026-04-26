@@ -225,25 +225,27 @@ export default function IndicatorDetail() {
         </div>
       </div>
 
-      <Section title="Details">
-        <Field label="ID" value={indicator.id} />
-        <Field label="Type" value={indicator.indicator_type} />
-        <Field label="Severity" value={indicator.severity} />
-        <Field label="Confidence" value={`${indicator.confidence}%`} />
-        <Field label="Countries" value={(indicator.country_codes || []).join(', ') || '—'} />
-        <Field label="Sectors" value={(indicator.sectors || []).join(', ') || '—'} />
-        <Field label="Attack Categories" value={(indicator.attack_categories || []).join(', ') || '—'} />
-        <Field label="First Seen" value={new Date(indicator.first_seen).toLocaleString()} />
-        <Field label="Last Seen" value={new Date(indicator.last_seen).toLocaleString()} />
-        <Field label="Created" value={new Date(indicator.created_at).toLocaleString()} />
-        <Field label="STIX ID" value={indicator.stix_id} />
-        {indicator.description && (
-          <div className="py-2">
-            <p className="text-sm text-gray-400 mb-1">Description</p>
-            <p className="text-sm text-gray-200">{indicator.description}</p>
-          </div>
-        )}
-      </Section>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <Section title="Details">
+            <Field label="ID" value={indicator.id} />
+            <Field label="Type" value={indicator.indicator_type} />
+            <Field label="Severity" value={indicator.severity} />
+            <Field label="Confidence" value={`${indicator.confidence}%`} />
+            <Field label="Countries" value={(indicator.country_codes || []).join(', ') || '—'} />
+            <Field label="Sectors" value={(indicator.sectors || []).join(', ') || '—'} />
+            <Field label="Attack Categories" value={(indicator.attack_categories || []).join(', ') || '—'} />
+            <Field label="First Seen" value={new Date(indicator.first_seen).toLocaleString()} />
+            <Field label="Last Seen" value={new Date(indicator.last_seen).toLocaleString()} />
+            <Field label="Created" value={new Date(indicator.created_at).toLocaleString()} />
+            <Field label="STIX ID" value={indicator.stix_id} />
+            {indicator.description && (
+              <div className="py-2">
+                <p className="text-sm text-gray-400 mb-1">Description</p>
+                <p className="text-sm text-gray-200">{indicator.description}</p>
+              </div>
+            )}
+          </Section>
 
           {indicator.enrichment_results?.length > 0 && (
             <Section title="Automated Enrichment" icon={Zap}>
@@ -271,6 +273,8 @@ export default function IndicatorDetail() {
               </div>
             </Section>
           )}
+
+          <ImpactSection indicatorType={indicator.indicator_type} attackCategories={indicator.attack_categories} />
         </div>
 
         <div className="space-y-6">

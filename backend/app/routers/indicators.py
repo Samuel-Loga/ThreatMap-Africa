@@ -48,11 +48,6 @@ async def create_indicator(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    try:
-        indicator_in.validate_value_format()
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-
     if indicator_in.indicator_type == "ip" and is_private_ip(indicator_in.value):
         raise HTTPException(status_code=400, detail="Private IP addresses are not allowed")
 

@@ -47,6 +47,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
     token = create_access_token({
         "sub": str(user.id),
         "role": user.role,
+        "username": user.username,
         "onboarding_completed": user.onboarding_completed,
     })
     return Token(access_token=token)
@@ -70,4 +71,8 @@ async def update_me(
     db.add(current_user)
     await db.commit()
     await db.refresh(current_user)
+
+    from app.worker.tasks import calculate_user_reputation
+    calculate_user_reputation.delay(str(current_user.id))
+
     return current_user

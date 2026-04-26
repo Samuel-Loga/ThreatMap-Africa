@@ -44,7 +44,7 @@ export default function Navbar() {
         {user && (
           <Link to="/profile" className="flex items-center gap-2 px-3 py-1 rounded-lg bg-dark-700/50 hover:bg-dark-700 border border-dark-600 transition-all group">
             <span className="text-sm text-gray-400 group-hover:text-gray-200">
-              {user.email} (<span className="text-primary">{user.role}</span>)
+              {user.username} (<span className="text-primary">{user.role}</span>)
             </span>
           </Link>
         )}

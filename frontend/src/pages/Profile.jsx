@@ -5,23 +5,55 @@ import { useAuth } from '../context/AuthContext'
 export default function Profile() {
   const { user: authUser } = useAuth()
   const [profile, setProfile] = useState(null)
+  const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [editData, setEditData] = useState({})
 
   useEffect(() => {
-    async function fetchProfile() {
-      try {
-        const res = await authApi.me()
-        setProfile(res.data)
-      } catch (err) {
-        setError('Failed to load profile')
-        console.error(err)
-      } finally {
-        setLoading(false)
-      }
-    }
     fetchProfile()
   }, [])
+
+  async function fetchProfile() {
+    setLoading(true)
+    try {
+      const res = await authApi.me()
+      setProfile(res.data)
+      setEditData(res.data)
+    } catch (err) {
+      setError('Failed to load profile')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleSave() {
+    setSaving(true)
+    try {
+      // Allowed fields for update
+      const allowed = [
+        'organization', 'org_type', 'department', 'experience_level', 
+        'interests', 'phone_number', 'email_notif', 'sms_notif', 
+        'push_notif', 'update_frequency', 'full_name', 'pgp_key', 
+        'region_state', 'city', 'data_sharing_consent'
+      ]
+      const payload = {}
+      allowed.forEach(key => {
+        if (editData[key] !== undefined) payload[key] = editData[key]
+      })
+
+      const res = await authApi.updateMe(payload)
+      setProfile(res.data)
+      setIsEditing(false)
+    } catch (err) {
+      console.error('Failed to update profile', err)
+      alert('Failed to save changes')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   if (loading) return <div className="text-center py-20 text-gray-400 animate-pulse">Loading profile...</div>
   if (error) return <div className="text-center py-20 text-red-500">{error}</div>
@@ -34,8 +66,10 @@ export default function Profile() {
     </div>
   )
 
+  const inputClass = "w-full bg-dark-700 border border-dark-600 rounded px-2 py-1 text-gray-200 focus:outline-none focus:border-primary text-sm"
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 pb-20">
       <div className="bg-dark-800 border border-dark-600 rounded-xl overflow-hidden shadow-2xl">
         {/* Header Section */}
         <div className="bg-gradient-to-r from-primary/30 to-purple-900/30 p-8 border-b border-dark-600">
@@ -52,10 +86,19 @@ export default function Profile() {
                 {profile.verification_level}
               </div>
             </div>
-            <div className="text-center md:text-left space-y-2">
-              <h1 className="text-4xl font-black text-white tracking-tight">
-                {profile.full_name || profile.username}
-              </h1>
+            <div className="text-center md:text-left flex-1 space-y-2">
+              {isEditing ? (
+                <input 
+                  className="text-3xl font-black text-white bg-dark-700 border border-dark-600 rounded px-3 py-1 w-full max-w-md"
+                  value={editData.full_name || ''}
+                  onChange={e => setEditData({...editData, full_name: e.target.value})}
+                  placeholder="Full Name"
+                />
+              ) : (
+                <h1 className="text-4xl font-black text-white tracking-tight">
+                  {profile.full_name || profile.username}
+                </h1>
+              )}
               <div className="flex flex-wrap justify-center md:justify-start gap-3">
                 <span className="px-3 py-1 bg-primary text-white text-xs font-bold rounded-md uppercase tracking-wide">
                   {profile.role}
@@ -69,6 +112,32 @@ export default function Profile() {
                   </span>
                 )}
               </div>
+            </div>
+            <div className="flex gap-3">
+              {isEditing ? (
+                <>
+                  <button 
+                    onClick={() => setIsEditing(false)}
+                    className="px-4 py-2 text-xs font-bold uppercase bg-dark-700 hover:bg-dark-600 text-gray-300 rounded-lg border border-dark-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="px-4 py-2 text-xs font-bold uppercase bg-primary hover:bg-primary/90 text-white rounded-lg transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
+                  >
+                    {saving ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </>
+              ) : (
+                <button 
+                  onClick={() => setIsEditing(true)}
+                  className="px-6 py-2 bg-dark-700 hover:bg-dark-600 text-gray-200 text-xs font-black uppercase tracking-widest rounded-lg transition-colors border border-dark-600"
+                >
+                  Edit Profile
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -90,19 +159,51 @@ export default function Profile() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-dark-900/30 p-6 rounded-xl border border-dark-700/50">
                 <div className="space-y-1">
                   <p className="text-xs text-gray-500 font-bold uppercase">Organization</p>
-                  <p className="text-gray-200 font-medium">{profile.organization || '—'}</p>
+                  {isEditing ? (
+                    <input 
+                      className={inputClass}
+                      value={editData.organization || ''}
+                      onChange={e => setEditData({...editData, organization: e.target.value})}
+                    />
+                  ) : (
+                    <p className="text-gray-200 font-medium">{profile.organization || '—'}</p>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs text-gray-500 font-bold uppercase">Department</p>
-                  <p className="text-gray-200 font-medium">{profile.department || '—'}</p>
+                  {isEditing ? (
+                    <input 
+                      className={inputClass}
+                      value={editData.department || ''}
+                      onChange={e => setEditData({...editData, department: e.target.value})}
+                    />
+                  ) : (
+                    <p className="text-gray-200 font-medium">{profile.department || '—'}</p>
+                  )}
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-gray-500 font-bold uppercase">Location</p>
-                  <p className="text-gray-200 font-medium">{profile.city}{profile.region_state ? `, ${profile.region_state}` : '—'}</p>
+                  <p className="text-xs text-gray-500 font-bold uppercase">City</p>
+                  {isEditing ? (
+                    <input 
+                      className={inputClass}
+                      value={editData.city || ''}
+                      onChange={e => setEditData({...editData, city: e.target.value})}
+                    />
+                  ) : (
+                    <p className="text-gray-200 font-medium">{profile.city || '—'}</p>
+                  )}
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-gray-500 font-bold uppercase">Member Since</p>
-                  <p className="text-gray-200 font-medium">{new Date(profile.created_at).toLocaleDateString()}</p>
+                  <p className="text-xs text-gray-500 font-bold uppercase">Region / State</p>
+                  {isEditing ? (
+                    <input 
+                      className={inputClass}
+                      value={editData.region_state || ''}
+                      onChange={e => setEditData({...editData, region_state: e.target.value})}
+                    />
+                  ) : (
+                    <p className="text-gray-200 font-medium">{profile.region_state || '—'}</p>
+                  )}
                 </div>
               </div>
             </section>
@@ -111,30 +212,59 @@ export default function Profile() {
             <section className="space-y-4">
               <h3 className="text-xs font-black text-gray-500 uppercase tracking-[0.2em] border-l-4 border-accent pl-4">Expertise & Interests</h3>
               <div className="flex flex-wrap gap-2">
-                {profile.interests && profile.interests.length > 0 ? (
-                  profile.interests.map(i => (
-                    <span key={i} className="px-4 py-2 bg-dark-700 text-gray-200 text-xs font-bold rounded-lg border border-dark-600">
-                      {i}
-                    </span>
+                {isEditing ? (
+                  ['Phishing', 'Malware', 'DDoS', 'Ransomware', 'Social Engineering', 'APT', 'Cloud Security'].map(interest => (
+                    <button
+                      key={interest}
+                      onClick={() => {
+                        const current = editData.interests || []
+                        const updated = current.includes(interest)
+                          ? current.filter(i => i !== interest)
+                          : [...current, interest]
+                        setEditData({...editData, interests: updated})
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                        (editData.interests || []).includes(interest)
+                          ? 'bg-primary border-primary text-white'
+                          : 'bg-dark-700 border-dark-600 text-gray-400 hover:border-gray-500'
+                      }`}
+                    >
+                      {interest}
+                    </button>
                   ))
                 ) : (
-                  <p className="text-gray-500 text-sm italic">No interests specified.</p>
+                  profile.interests && profile.interests.length > 0 ? (
+                    profile.interests.map(i => (
+                      <span key={i} className="px-4 py-2 bg-dark-700 text-gray-200 text-xs font-bold rounded-lg border border-dark-600">
+                        {i}
+                      </span>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-sm italic">No interests specified.</p>
+                  )
                 )}
               </div>
             </section>
 
             {/* PGP Key */}
-            {profile.pgp_key && (
-              <section className="space-y-4">
-                <h3 className="text-xs font-black text-gray-500 uppercase tracking-[0.2em] border-l-4 border-green-500 pl-4">Secure Communication</h3>
-                <div className="bg-dark-900 rounded-lg p-4 border border-dark-700">
-                  <p className="text-[10px] text-gray-500 font-mono mb-2 uppercase font-bold tracking-widest">PGP Public Key</p>
+            <section className="space-y-4">
+              <h3 className="text-xs font-black text-gray-500 uppercase tracking-[0.2em] border-l-4 border-green-500 pl-4">Secure Communication</h3>
+              <div className="bg-dark-900 rounded-lg p-4 border border-dark-700">
+                <p className="text-[10px] text-gray-500 font-mono mb-2 uppercase font-bold tracking-widest">PGP Public Key</p>
+                {isEditing ? (
+                  <textarea 
+                    className={`${inputClass} font-mono text-[10px]`}
+                    rows={5}
+                    value={editData.pgp_key || ''}
+                    onChange={e => setEditData({...editData, pgp_key: e.target.value})}
+                  />
+                ) : (
                   <pre className="text-[9px] text-gray-400 font-mono whitespace-pre-wrap overflow-x-auto max-h-32">
-                    {profile.pgp_key}
+                    {profile.pgp_key || 'No PGP key provided.'}
                   </pre>
-                </div>
-              </section>
-            )}
+                )}
+              </div>
+            </section>
           </div>
 
           {/* Sidebar */}
@@ -145,25 +275,48 @@ export default function Profile() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-400">Email Alerts</span>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${profile.email_notif ? 'bg-green-900 text-green-400' : 'bg-red-900 text-red-400'}`}>
-                    {profile.email_notif ? 'Enabled' : 'Disabled'}
-                  </span>
+                  {isEditing ? (
+                    <input 
+                      type="checkbox"
+                      checked={editData.email_notif}
+                      onChange={e => setEditData({...editData, email_notif: e.target.checked})}
+                    />
+                  ) : (
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${profile.email_notif ? 'bg-green-900 text-green-400' : 'bg-red-900 text-red-400'}`}>
+                      {profile.email_notif ? 'Enabled' : 'Disabled'}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-400">SMS Alerts</span>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${profile.sms_notif ? 'bg-green-900 text-green-400' : 'bg-red-900 text-red-400'}`}>
-                    {profile.sms_notif ? 'Enabled' : 'Disabled'}
-                  </span>
+                  {isEditing ? (
+                    <input 
+                      type="checkbox"
+                      checked={editData.sms_notif}
+                      onChange={e => setEditData({...editData, sms_notif: e.target.checked})}
+                    />
+                  ) : (
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${profile.sms_notif ? 'bg-green-900 text-green-400' : 'bg-red-900 text-red-400'}`}>
+                      {profile.sms_notif ? 'Enabled' : 'Disabled'}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-400">Update Freq</span>
-                  <span className="text-primary font-bold uppercase text-[10px]">{profile.update_frequency}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-400">Data Sharing</span>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${profile.data_sharing_consent ? 'bg-green-900 text-green-400' : 'bg-red-900 text-red-400'}`}>
-                    {profile.data_sharing_consent ? 'Agreed' : 'Refused'}
-                  </span>
+                  {isEditing ? (
+                    <select 
+                      className="bg-dark-700 text-xs border border-dark-600 rounded"
+                      value={editData.update_frequency}
+                      onChange={e => setEditData({...editData, update_frequency: e.target.value})}
+                    >
+                      <option value="instant">Instant</option>
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="none">None</option>
+                    </select>
+                  ) : (
+                    <span className="text-primary font-bold uppercase text-[10px]">{profile.update_frequency}</span>
+                  )}
                 </div>
               </div>
             </section>
@@ -179,11 +332,6 @@ export default function Profile() {
                     <p className="text-[10px] text-gray-500 uppercase font-bold">{profile.two_factor_enabled ? 'Active' : 'Inactive'}</p>
                   </div>
                 </div>
-                {!profile.two_factor_enabled && (
-                  <button className="w-full py-2 bg-primary/20 hover:bg-primary/30 text-primary text-[10px] font-black uppercase tracking-widest rounded-lg transition-colors border border-primary/30">
-                    Enable 2FA
-                  </button>
-                )}
               </div>
             </section>
           </div>

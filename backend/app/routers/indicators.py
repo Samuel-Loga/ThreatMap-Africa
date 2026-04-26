@@ -94,6 +94,8 @@ async def create_indicator(
     await db.refresh(indicator)
 
     enrich_indicator.delay(str(indicator.id))
+    from app.worker.tasks import calculate_user_reputation
+    calculate_user_reputation.delay(str(current_user.id))
 
     return indicator
 

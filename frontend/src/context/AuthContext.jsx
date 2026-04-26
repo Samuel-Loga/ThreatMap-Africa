@@ -21,6 +21,7 @@ export function AuthProvider({ children }) {
     const userData = { 
       id: payload.sub, 
       role: payload.role, 
+      username: payload.username,
       email,
       onboarding_completed: payload.onboarding_completed ?? false 
     }

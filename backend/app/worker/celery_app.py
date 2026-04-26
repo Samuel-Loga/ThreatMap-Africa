@@ -8,6 +8,19 @@ celery_app = Celery(
     include=["app.worker.tasks"],
 )
 
+from celery.schedules import crontab
+
+celery_app.conf.beat_schedule = {
+    "daily-summary-task": {
+        "task": "send_daily_summary",
+        "schedule": crontab(hour=8, minute=0), # Daily at 8 AM UTC
+    },
+    "weekly-summary-task": {
+        "task": "send_weekly_summary",
+        "schedule": crontab(day_of_week=1, hour=9, minute=0), # Weekly on Monday at 9 AM UTC
+    },
+}
+
 celery_app.conf.update(
     task_serializer="json",
     accept_content=["json"],

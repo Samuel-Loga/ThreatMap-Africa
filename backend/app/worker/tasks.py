@@ -8,6 +8,8 @@ from app.worker.celery_app import celery_app
 from app.database import SyncSessionLocal
 from app.models import Indicator, EnrichmentResult
 from app.config import settings
+from app.worker.notifications import process_instant_notifications, process_summary_notifications
+from app.worker.reputation import update_user_reputation
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +119,26 @@ def broadcast_ws_event(indicator_id: str, status: str, enrichment_data: dict):
         logger.warning(f"WebSocket broadcast error: {e}")
 
 
+@celery_app.task(name="send_instant_notifications")
+def send_instant_notifications(indicator_id: str):
+    process_instant_notifications(indicator_id)
+
+
+@celery_app.task(name="send_daily_summary")
+def send_daily_summary():
+    process_summary_notifications("daily")
+
+
+@celery_app.task(name="send_weekly_summary")
+def send_weekly_summary():
+    process_summary_notifications("weekly")
+
+
+@celery_app.task(name="calculate_user_reputation")
+def calculate_user_reputation(user_id: str):
+    update_user_reputation(user_id)
+
+
 @celery_app.task(name="enrich_indicator", bind=True, max_retries=2)
 def enrich_indicator(self, indicator_id: str):
     with SyncSessionLocal() as db:
@@ -198,4 +220,5 @@ def enrich_indicator(self, indicator_id: str):
         db.commit()
 
     broadcast_ws_event(indicator_id, "enriched", enrichment_data)
+    send_instant_notifications.delay(indicator_id)
     logger.info(f"Enrichment complete for indicator {indicator_id}")

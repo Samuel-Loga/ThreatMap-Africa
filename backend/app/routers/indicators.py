@@ -109,6 +109,7 @@ async def list_indicators(
     tlp: Optional[str] = Query(None),
     severity: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
+    submitted_by: Optional[uuid.UUID] = Query(None),
     since: Optional[datetime] = Query(None),
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
@@ -131,6 +132,8 @@ async def list_indicators(
         filters.append(Indicator.sectors.any(sector))
     if attack_category:
         filters.append(Indicator.attack_categories.any(attack_category))
+    if submitted_by:
+        filters.append(Indicator.submitted_by == submitted_by)
     
     if search:
         search_filter = or_(

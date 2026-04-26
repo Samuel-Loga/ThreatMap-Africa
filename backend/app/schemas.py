@@ -17,7 +17,7 @@ AFRICAN_COUNTRY_CODES = [
     "MZ", "NA", "NE", "SC", "SD", "SL", "SO", "SS", "ST", "SZ",
     "TD", "TG", "TN", "ZW",
 ]
-SECTORS = ["banking", "telecommunications", "government", "healthcare", "energy", "retail", "ngo", "education"]
+SECTORS = ["Banking", "Telecommunications", "Government", "Healthcare", "Energy", "Retail", "NGO", "Education"]
 ATTACK_CATEGORIES = [
     "Phishing", "Business Email Compromise", "Mobile Money Fraud", "SIM Swap", 
     "Ransomware", "Data Exfiltration", "DDoS", "SSH Brute Force", 
@@ -72,10 +72,51 @@ class UserOut(BaseModel):
     username: str
     role: str
     organization: str
+    org_type: str
+    department: str
+    experience_level: str
+    interests: list[str]
+    phone_number: str
+    email_notif: bool
+    sms_notif: bool
+    push_notif: bool
+    update_frequency: str
+    full_name: str
+    profile_pic: str
+    pgp_key: str
+    two_factor_enabled: bool
+    region_state: str
+    city: str
+    data_sharing_consent: bool
+    onboarding_completed: bool
+    trust_score: int
+    reputation_points: int
+    verification_level: str
     is_active: bool
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class UserUpdate(BaseModel):
+    organization: Optional[str] = None
+    org_type: Optional[str] = None
+    department: Optional[str] = None
+    experience_level: Optional[str] = None
+    interests: Optional[list[str]] = None
+    phone_number: Optional[str] = None
+    email_notif: Optional[bool] = None
+    sms_notif: Optional[bool] = None
+    push_notif: Optional[bool] = None
+    update_frequency: Optional[str] = None
+    full_name: Optional[str] = None
+    profile_pic: Optional[str] = None
+    pgp_key: Optional[str] = None
+    two_factor_enabled: Optional[bool] = None
+    region_state: Optional[str] = None
+    city: Optional[str] = None
+    data_sharing_consent: Optional[bool] = None
+    onboarding_completed: Optional[bool] = None
 
 
 class Token(BaseModel):

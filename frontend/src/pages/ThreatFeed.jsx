@@ -8,16 +8,17 @@ const PAGE_SIZE = 20
 export default function ThreatFeed() {
   const [indicators, setIndicators] = useState([])
   const [filters, setFilters] = useState({})
+  const [search, setSearch] = useState('')
   const [offset, setOffset] = useState(0)
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [liveNotification, setLiveNotification] = useState(null)
   const wsRef = useRef(null)
 
-  const fetchIndicators = useCallback(async (newFilters, newOffset) => {
+  const fetchIndicators = useCallback(async (currentFilters, currentSearch, newOffset) => {
     setLoading(true)
     try {
-      const params = { limit: PAGE_SIZE, offset: newOffset, ...newFilters }
+      const params = { limit: PAGE_SIZE, offset: newOffset, ...currentFilters, search: currentSearch }
       Object.keys(params).forEach((k) => !params[k] && delete params[k])
       const res = await indicatorsApi.list(params)
       const data = res.data
@@ -36,8 +37,11 @@ export default function ThreatFeed() {
 
   useEffect(() => {
     setOffset(0)
-    fetchIndicators(filters, 0)
-  }, [filters, fetchIndicators])
+    const timeout = setTimeout(() => {
+      fetchIndicators(filters, search, 0)
+    }, 300)
+    return () => clearTimeout(timeout)
+  }, [filters, search, fetchIndicators])
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
@@ -69,21 +73,34 @@ export default function ThreatFeed() {
   const loadMore = () => {
     const newOffset = offset + PAGE_SIZE
     setOffset(newOffset)
-    fetchIndicators(filters, newOffset)
+    fetchIndicators(filters, search, newOffset)
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Threat Feed</h1>
-          <p className="text-gray-400 mt-1">Live African threat indicators</p>
-        </div>
-        {liveNotification && (
-          <div className="bg-green-900/30 border border-green-700 text-green-300 text-sm px-4 py-2 rounded animate-pulse">
-            🔔 {liveNotification}
+      <div className="flex flex-col md:flex-row md:items-center gap-6 justify-between">
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold whitespace-nowrap">Threat Feed</h1>
+          <div className="hidden md:block w-px h-8 bg-dark-600"></div>
+          <div className="relative flex-1 min-w-[300px]">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">🔍</span>
+            <input
+              type="text"
+              placeholder="Search indicators, countries, descriptions..."
+              className="w-full bg-dark-800 border border-dark-600 rounded-lg pl-9 pr-4 py-2 text-sm text-gray-200 focus:outline-none focus:border-primary transition-colors"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
-        )}
+        </div>
+        
+        <div className="flex items-center gap-3">
+          {liveNotification && (
+            <div className="bg-green-900/30 border border-green-700 text-green-300 text-[10px] px-3 py-1.5 rounded animate-pulse whitespace-nowrap">
+              🔔 {liveNotification}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex gap-4">

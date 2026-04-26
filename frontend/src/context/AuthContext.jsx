@@ -18,7 +18,13 @@ export function AuthProvider({ children }) {
     const token = res.data.access_token
     localStorage.setItem('access_token', token)
     const payload = JSON.parse(atob(token.split('.')[1]))
-    const userData = { id: payload.sub, role: payload.role, email }
+    const userData = { 
+      id: payload.sub, 
+      role: payload.role, 
+      username: payload.username,
+      email,
+      onboarding_completed: payload.onboarding_completed ?? false 
+    }
     localStorage.setItem('user', JSON.stringify(userData))
     setUser(userData)
     return userData
@@ -31,7 +37,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, setUser, login, logout }}>
       {children}
     </AuthContext.Provider>
   )

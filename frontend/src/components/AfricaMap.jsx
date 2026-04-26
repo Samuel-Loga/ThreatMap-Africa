@@ -1,5 +1,7 @@
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet'
 
+const regionNames = new Intl.DisplayNames(['en'], { type: 'region' })
+
 const COUNTRY_COORDS = {
   NG: [9.082, 8.6753], KE: [-0.0236, 37.9062], ZA: [-30.5595, 22.9375],
   GH: [7.9465, -1.0232], ET: [9.145, 40.4897], TZ: [-6.369, 34.8888],
@@ -19,6 +21,14 @@ const COUNTRY_COORDS = {
   SL: [8.4606, -11.7799], SO: [5.1521, 46.1996], SS: [6.877, 31.307],
   ST: [0.1864, 6.6131], SZ: [-26.5225, 31.4659], TD: [15.4542, 18.7322],
   TG: [8.6195, 0.8248], TN: [33.8869, 9.5375], ZW: [-19.0154, 29.1549],
+}
+
+function getCountryName(cc) {
+  try {
+    return regionNames.of(cc)
+  } catch {
+    return cc
+  }
 }
 
 export default function AfricaMap({ indicators = [] }) {
@@ -56,7 +66,7 @@ export default function AfricaMap({ indicators = [] }) {
             pathOptions={{ color, fillColor: color, fillOpacity: 0.6, weight: 1 }}
           >
             <Tooltip>
-              <strong>{cc}</strong>: {count} indicator{count !== 1 ? 's' : ''}
+              <strong>{getCountryName(cc)}</strong>: {count} indicator{count !== 1 ? 's' : ''}
             </Tooltip>
           </CircleMarker>
         )
@@ -70,7 +80,7 @@ export default function AfricaMap({ indicators = [] }) {
             radius={4}
             pathOptions={{ color: '#334155', fillColor: '#334155', fillOpacity: 0.4, weight: 1 }}
           >
-            <Tooltip>{cc}: no data</Tooltip>
+            <Tooltip>{getCountryName(cc)}: no data</Tooltip>
           </CircleMarker>
         )
       })}

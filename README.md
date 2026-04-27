@@ -19,6 +19,7 @@ ThreatMap Africa is a purpose-built platform designed to fill the gap left by We
 
 *   **Submit & Share:** Report Indicators of Compromise (IOCs) such as malicious IPs, domains, and file hashes with specific African context (e.g., Mobile Money Fraud, SIM Swap).
 *   **Automated Enrichment:** Automatically query external sources like VirusTotal, AbuseIPDB, and Shodan to score threats in real-time.
+*   **Community Intelligence:** Engage in dedicated **Forums** and **Incident Comments** to discuss evolving threats with other African analysts.
 *   **Localized Visualization:** 
     *   **Africa Threat Heatmap:** Interactive map showing threat density across the continent.
     *   **Severity Distribution:** Real-time analysis tracking Critical, High, Medium, and Low severity threats.
@@ -40,36 +41,36 @@ ThreatMap Africa is a purpose-built platform designed to fill the gap left by We
 
 ## Local Setup
 
-### 1. Prerequisites
-*   Docker Desktop installed.
-*   Optional: API Keys for VirusTotal and AbuseIPDB (set in `.env`).
-
-### 2. Configure Environment
+### 1. Configure Environment
 ```cmd
 copy .env.example .env
 ```
-Ensure `POSTGRES_PASSWORD` and `SECRET_KEY` are set.
+Ensure `POSTGRES_PASSWORD` and `SECRET_KEY` are set in the `.env` file.
 
-### 3. Launch Platform
+### 2. Launch Platform
 ```cmd
 docker-compose up --build
 ```
-Local access: **`http://localhost`**
+
+### 3. Initialize Database (Mandatory)
+If this is a fresh install, run the migrations to create the latest tables:
+```cmd
+docker-compose exec api alembic upgrade head
+```
 
 ---
 
 ## Development & Seeding
 
-### Generate Dummy Data
-To populate the dashboard with realistic African threat data, execute the following:
+### Generate Real Incident Data
+To populate the dashboard with the **15+ verified African incidents** and **8 expert analyst profiles**:
 ```cmd
-docker-compose exec api python seed_data.py
+docker-compose exec api python seed_production.py
 ```
-*Creates 150+ localized indicators and a default admin account.*
 
-### Admin Credentials
-*   **Username:** `admin@threatmap.africa`
-*   **Password:** `admin1234`
+### Expert Analyst Logins (Post-Seeding)
+*   **Usernames:** `amara_diallo`, `ngozi_okonkwo`, `sipho_ndlovu`, `fatuma_hassan`
+*   **Default Password:** `threatmap2024`
 
 ---
 

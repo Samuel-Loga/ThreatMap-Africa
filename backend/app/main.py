@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.routers import auth, indicators, export, taxii
+from app.routers import auth, indicators, export, taxii, notifications
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +37,7 @@ app.include_router(auth.router)
 app.include_router(indicators.router)
 app.include_router(export.router)
 app.include_router(taxii.router)
+app.include_router(notifications.router)
 
 
 @app.get("/api/health")

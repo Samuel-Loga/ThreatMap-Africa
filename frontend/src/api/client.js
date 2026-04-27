@@ -49,6 +49,12 @@ export const indicatorsApi = {
   create: (data) => client.post('/indicators', data),
 }
 
+export const notificationsApi = {
+  list: (params) => client.get('/notifications', { params }),
+  markRead: (id) => client.post(`/notifications/${id}/read`),
+  markAllRead: () => client.post('/notifications/read-all'),
+}
+
 export const exportApi = {
   stix: (params) => client.get('/export/stix', { params }),
 }

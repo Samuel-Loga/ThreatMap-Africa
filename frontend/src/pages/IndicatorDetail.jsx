@@ -263,10 +263,10 @@ export default function IndicatorDetail() {
           </div>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0 pt-4 lg:pt-0 border-t lg:border-t-0 border-dark-700">
-          <div className="text-right mr-3 hidden md:block">
+          {/** <div className="text-right mr-3 hidden md:block">
             <p className="text-[10px] text-gray-500 uppercase font-bold">Status</p>
             <p className="text-sm text-gray-200 capitalize font-medium">{indicator.status}</p>
-          </div>
+          </div> **/}
           <span className={`text-xs px-3 py-1.5 rounded-full font-bold tracking-tight ${TLP_COLORS[indicator.tlp] || 'bg-dark-600 text-gray-300'}`}>
             TLP:{indicator.tlp}
           </span>

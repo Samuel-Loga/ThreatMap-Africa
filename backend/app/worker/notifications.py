@@ -19,7 +19,7 @@ def send_push(user_id: str, title: str, body: str):
     # Placeholder for Push service (e.g. Firebase Cloud Messaging)
     logger.info(f"SIMULATED PUSH to user {user_id}: {title} - {body}")
 
-def notify_user_of_indicator(user: User, indicator: Indicator):
+def notify_user_of_indicator(user: User, indicator: Indicator, db=None):
     subject = f"Threat Alert: New {indicator.indicator_type} detected"
     message = f"Indicator: {indicator.value}\nSeverity: {indicator.severity}\nDescription: {indicator.description}"
     
@@ -31,6 +31,15 @@ def notify_user_of_indicator(user: User, indicator: Indicator):
     
     if user.push_notif:
         send_push(str(user.id), subject, message)
+        # Persistent in-app notification
+        if db:
+            from app.models import Notification
+            db.add(Notification(
+                user_id=user.id,
+                title=subject,
+                message=message,
+                link=f"/indicators/{indicator.id}"
+            ))
 
 def process_instant_notifications(indicator_id: str):
     with SyncSessionLocal() as db:
@@ -47,7 +56,8 @@ def process_instant_notifications(indicator_id: str):
         )).scalars().all()
         
         for user in users:
-            notify_user_of_indicator(user, indicator)
+            notify_user_of_indicator(user, indicator, db)
+        db.commit()
 
 def process_summary_notifications(frequency: str):
     with SyncSessionLocal() as db:

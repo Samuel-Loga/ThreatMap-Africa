@@ -1,21 +1,27 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { 
-  LayoutDashboard, 
-  Rss, 
-  PlusCircle, 
-  Share, 
-  ChevronLeft, 
+import {
+  LayoutDashboard,
+  Rss,
+  PlusCircle,
+  Share,
+  ChevronLeft,
   ChevronRight,
-  MessageSquare
+  MessageSquare,
+  Trophy,
+  Lock,
+  User,
 } from 'lucide-react'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/feed', label: 'Threat Feed', icon: Rss },
   { to: '/submit', label: 'Submit IOC', icon: PlusCircle },
+  { to: '/forum', label: 'Forum', icon: MessageSquare },
+  { to: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+  { to: '/workspaces', label: 'Workspaces', icon: Lock },
   { to: '/export', label: 'Export', icon: Share },
-  { to: '/forum', label: 'Community', icon: MessageSquare },
+  { to: '/profile', label: 'Profile', icon: User },
 ]
 
 export default function Sidebar() {
@@ -30,31 +36,29 @@ export default function Sidebar() {
   }, [isExpanded])
 
   return (
-    <aside 
-      className={`bg-dark-800 border-r border-dark-600 transition-all duration-300 flex flex-col sticky top-[61px] h-[calc(100vh-61px)] z-40 ${
-        isExpanded ? 'w-64' : 'w-20'
+    <aside
+      className={`bg-dark-800 border-r border-dark-600 transition-all duration-300 flex flex-col sticky top-[57px] h-[calc(100vh-57px)] z-40 flex-shrink-0 ${
+        isExpanded ? 'w-52' : 'w-16'
       }`}
     >
-      <div className="flex-1 py-6 overflow-y-auto overflow-x-hidden custom-scrollbar">
-        <div className="flex flex-col gap-2 px-3">
+      <div className="flex-1 py-4 overflow-y-auto overflow-x-hidden">
+        <div className="flex flex-col gap-1 px-2">
           {navItems.map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
               to={to}
-              className={`flex items-center rounded-lg transition-all duration-200 group h-12 ${
-                isExpanded ? 'px-4 gap-4' : 'justify-center'
+              title={!isExpanded ? label : ''}
+              className={`flex items-center rounded-lg transition-all duration-200 h-11 ${
+                isExpanded ? 'px-3 gap-3' : 'justify-center'
               } ${
                 location.pathname === to
                   ? 'bg-primary text-white shadow-lg shadow-primary/20'
                   : 'text-gray-400 hover:text-white hover:bg-dark-700'
               }`}
-              title={!isExpanded ? label : ''}
             >
-              <div className="flex-shrink-0 flex items-center justify-center">
-                <Icon size={20} />
-              </div>
+              <Icon size={20} className="flex-shrink-0" />
               {isExpanded && (
-                <span className="font-medium whitespace-nowrap overflow-hidden">
+                <span className="text-sm font-medium whitespace-nowrap overflow-hidden">
                   {label}
                 </span>
               )}
@@ -63,12 +67,12 @@ export default function Sidebar() {
         </div>
       </div>
 
-      <div className="p-4 border-t border-dark-600">
+      <div className="p-2 border-t border-dark-600">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className="w-full flex items-center justify-center py-2 rounded-lg bg-dark-700 hover:bg-dark-600 text-gray-400 hover:text-white transition-colors"
         >
-          {isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+          {isExpanded ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
         </button>
       </div>
     </aside>

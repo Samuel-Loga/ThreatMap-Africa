@@ -15,7 +15,6 @@ import OnboardingGuard from './components/OnboardingGuard'
 import Forum from './pages/Forum'
 import Leaderboard from './pages/Leaderboard'
 import Workspaces from './pages/Workspaces'
-import CountryDirectory from './pages/CountryDirectory'
 
 export default function App() {
   return (
@@ -38,7 +37,6 @@ export default function App() {
                 <Route path="/forum" element={<Forum />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/workspaces" element={<Workspaces />} />
-                <Route path="/countries" element={<CountryDirectory />} />
               </Route>
             </Route>
           </Route>

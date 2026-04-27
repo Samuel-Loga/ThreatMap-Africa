@@ -39,23 +39,23 @@ export default function Sidebar() {
             <Link
               key={to}
               to={to}
-              className={`flex items-center gap-4 px-3 py-3 rounded-lg transition-all duration-200 group ${
+              className={`flex items-center rounded-lg transition-all duration-200 group h-12 ${
+                isExpanded ? 'px-4 gap-4' : 'justify-center'
+              } ${
                 location.pathname === to
                   ? 'bg-primary text-white shadow-lg shadow-primary/20'
                   : 'text-gray-400 hover:text-white hover:bg-dark-700'
               }`}
               title={!isExpanded ? label : ''}
             >
-              <div className="flex-shrink-0">
-                <Icon size={22} />
+              <div className="flex-shrink-0 flex items-center justify-center">
+                <Icon size={20} />
               </div>
-              <span 
-                className={`font-medium whitespace-nowrap transition-opacity duration-300 ${
-                  isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 pointer-events-none'
-                }`}
-              >
-                {label}
-              </span>
+              {isExpanded && (
+                <span className="font-medium whitespace-nowrap overflow-hidden">
+                  {label}
+                </span>
+              )}
             </Link>
           ))}
         </div>

@@ -7,18 +7,26 @@ A web-based threat intelligence sharing platform purpose-built for Africa's cybe
 
 ---
 
+## 🔗 Live Access
+The platform is deployed and accessible at:  
+**🌐 [http://159.89.94.93/](http://159.89.94.93/)**
+
+---
+
 ## 📖 What it Does
 ThreatMap Africa is a purpose-built platform designed to fill the gap left by Western-centric threat feeds. It allows security practitioners across the continent to:
 *   **Submit & Share:** Report Indicators of Compromise (IOCs) such as malicious IPs, domains, and file hashes with specific African context (e.g., Mobile Money Fraud, SIM Swap).
 *   **Automated Enrichment:** Automatically query external sources like VirusTotal, AbuseIPDB, and Shodan to score threats in real-time.
-*   **African Context:** Tag threats by specific African countries and impacted sectors (Banking, Gov, etc.).
+*   **Localized Visualization:** 
+    *   **Africa Threat Heatmap:** Interactive map showing threat density across the continent.
+    *   **Severity Distribution:** Real-time doughnut charts tracking Critical, High, Medium, and Low severity threats.
+    *   **Indicator Composition:** Visual breakdown of threat types (IPs, Domains, URLs, etc.).
 *   **STIX/TAXII Support:** Export data in industry-standard formats for integration with existing SIEM/SOAR tools.
-*   **Real-time Visualization:** View a live map of threat activity across the continent.
 
 ---
 
 ## 🛠 Tech Stack
-*   **Frontend:** React 18, Vite, Tailwind CSS, Leaflet (Mapping), Recharts (Analytics).
+*   **Frontend:** React 18, Vite, Tailwind CSS, Leaflet (Mapping), Recharts (Advanced Analytics).
 *   **Backend:** FastAPI (Python), SQLAlchemy 2.0 (Async), Pydantic v2.
 *   **Processing:** Celery + Redis (Background Tasks), WebSocket (Real-time updates).
 *   **Database:** PostgreSQL 15.
@@ -26,14 +34,14 @@ ThreatMap Africa is a purpose-built platform designed to fill the gap left by We
 
 ---
 
-## 🚀 How to Set It Up
+## 🚀 How to Set It Up Locally
 
 ### 1. Prerequisites
-*   [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed on Windows/Mac/Linux.
-*   Optional: API Keys for [VirusTotal](https://www.virustotal.com/) and [AbuseIPDB](https://www.abuseipdb.com/).
+*   [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed.
+*   Optional: API Keys for VirusTotal and AbuseIPDB (set in `.env`).
 
 ### 2. Configure Environment
-Copy the example environment file and set your secrets:
+Copy the example environment file:
 ```cmd
 copy .env.example .env
 ```
@@ -43,32 +51,27 @@ POSTGRES_PASSWORD=your_secure_password
 SECRET_KEY=your_random_32_char_string
 ```
 
----
-
-## 🏃 How to Run It
-
-### Start the Platform
-Run the following command in your terminal:
+### 3. Launch the Platform
 ```cmd
 docker-compose up --build
 ```
-The platform will be available at: **`http://localhost`**
-
-### Initialize a SuperAdmin (First Run)
-If you need to bypass registration to explore the dashboard, run this command:
-```cmd
-docker-compose exec api python -c "from app.database import SyncSessionLocal; from app.models import User; from app.auth import get_password_hash; db=SyncSessionLocal(); user=User(email='admin@threatmap.africa', username='admin', hashed_password=get_password_hash('admin1234'), role='SuperAdmin', organization='ThreatMap'); db.add(user); db.commit(); print('User created successfully')"
-```
-*Login with `admin@threatmap.africa` / `admin1234`*
+The local platform will be available at: **`http://localhost`**
 
 ---
 
-## 📦 Dependencies
-| Component | Primary Libraries |
-| :--- | :--- |
-| **Backend** | `fastapi`, `uvicorn`, `sqlalchemy`, `celery`, `redis`, `stix2`, `psycopg2` |
-| **Frontend** | `react`, `leaflet`, `axios`, `recharts`, `tailwindcss`, `vite` |
-| **Infrastructure** | `postgres:15-alpine`, `redis:7-alpine`, `nginx:1.25-alpine` |
+## 🧪 Development & Testing
+
+### Populate Dummy Data (African Context)
+To visualize the dashboard with realistic data, run the seeding script:
+```cmd
+docker-compose exec api python seed_data.py
+```
+This generates 150+ indicators across countries like Nigeria, Kenya, South Africa, and Ghana, focusing on sectors like Banking and Telecom.
+
+### Default Admin Credentials
+If seeded, you can login with:
+*   **User:** `admin@threatmap.africa`
+*   **Pass:** `admin1234`
 
 ---
 

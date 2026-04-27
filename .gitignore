@@ -3,7 +3,11 @@ node_modules/
 __pycache__/
 *.pyc
 *.pyo
-.env
+# Dummy Data & Scripts
+seed_data.py
+*.sqlite
+*.db
+celerybeat-schedule
 .env.local
 *.egg-info/
 dist/

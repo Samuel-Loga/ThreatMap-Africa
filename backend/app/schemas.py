@@ -249,3 +249,158 @@ class IndicatorOut(BaseModel):
     enrichment_results: list[EnrichmentResultOut] = []
 
     model_config = {"from_attributes": True}
+
+
+class ForumCreate(BaseModel):
+    title: str = Field(..., min_length=1, max_length=255)
+    description: str = Field(default="", max_length=1000)
+
+
+class ForumOut(BaseModel):
+    id: uuid.UUID
+    title: str
+    description: str
+    created_by: uuid.UUID
+    created_at: datetime
+    is_active: bool
+
+    model_config = {"from_attributes": True}
+
+
+class PostCreate(BaseModel):
+    title: str = Field(..., min_length=1, max_length=255)
+    content: str = Field(..., min_length=1)
+    forum_id: uuid.UUID
+
+
+class PostOut(BaseModel):
+    id: uuid.UUID
+    title: str
+    content: str
+    forum_id: uuid.UUID
+    author_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    upvotes: int
+    downvotes: int
+    is_pinned: bool
+
+    model_config = {"from_attributes": True}
+
+
+class CommentCreate(BaseModel):
+    content: str = Field(..., min_length=1)
+    post_id: Optional[uuid.UUID] = None
+    indicator_id: Optional[uuid.UUID] = None
+    parent_id: Optional[uuid.UUID] = None
+
+    @model_validator(mode="after")
+    def check_target(self):
+        if not self.post_id and not self.indicator_id:
+            raise ValueError("Either post_id or indicator_id must be provided")
+        return self
+
+
+class CommentOut(BaseModel):
+    id: uuid.UUID
+    content: str
+    post_id: Optional[uuid.UUID]
+    indicator_id: Optional[uuid.UUID]
+    author_id: uuid.UUID
+    parent_id: Optional[uuid.UUID]
+    created_at: datetime
+    updated_at: datetime
+    upvotes: int
+    downvotes: int
+
+    model_config = {"from_attributes": True}
+
+
+class VoteCreate(BaseModel):
+    post_id: Optional[uuid.UUID] = None
+    comment_id: Optional[uuid.UUID] = None
+    vote_type: str = Field(..., pattern="^(up|down)$")
+
+    @model_validator(mode="after")
+    def check_target(self):
+        if not self.post_id and not self.comment_id:
+            raise ValueError("Either post_id or comment_id must be provided")
+        return self
+
+
+class VoteOut(BaseModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    post_id: Optional[uuid.UUID]
+    comment_id: Optional[uuid.UUID]
+    vote_type: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class BadgeOut(BaseModel):
+    id: uuid.UUID
+    name: str
+    description: str
+    icon: str
+    criteria: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class UserBadgeOut(BaseModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    badge_id: uuid.UUID
+    awarded_at: datetime
+    badge: BadgeOut
+
+    model_config = {"from_attributes": True}
+
+
+class WorkspaceCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: str = Field(default="", max_length=1000)
+
+
+class WorkspaceMemberOut(BaseModel):
+    id: uuid.UUID
+    workspace_id: uuid.UUID
+    user_id: uuid.UUID
+    role: str
+    joined_at: datetime
+    model_config = {"from_attributes": True}
+
+
+class WorkspaceIndicatorOut(BaseModel):
+    id: uuid.UUID
+    workspace_id: uuid.UUID
+    indicator_id: uuid.UUID
+    added_by: uuid.UUID
+    added_at: datetime
+    model_config = {"from_attributes": True}
+
+
+class WorkspaceOut(BaseModel):
+    id: uuid.UUID
+    name: str
+    description: str
+    owner_id: uuid.UUID
+    created_at: datetime
+    is_active: bool
+    members: list[WorkspaceMemberOut] = []
+    model_config = {"from_attributes": True}
+
+
+class LeaderboardEntry(BaseModel):
+    rank: int
+    user_id: uuid.UUID
+    username: str
+    organization: str
+    reputation_points: int
+    trust_score: int
+    verification_level: str
+    badge_count: int
+    model_config = {"from_attributes": True}

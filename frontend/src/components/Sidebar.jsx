@@ -6,7 +6,8 @@ import {
   PlusCircle, 
   Share, 
   ChevronLeft, 
-  ChevronRight 
+  ChevronRight,
+  MessageSquare
 } from 'lucide-react'
 
 const navItems = [
@@ -14,6 +15,7 @@ const navItems = [
   { to: '/feed', label: 'Threat Feed', icon: Rss },
   { to: '/submit', label: 'Submit IOC', icon: PlusCircle },
   { to: '/export', label: 'Export', icon: Share },
+  { to: '/forum', label: 'Community', icon: MessageSquare },
 ]
 
 export default function Sidebar() {

@@ -259,18 +259,41 @@ async def leaderboard(limit: int = Query(20, ge=1, le=100), db: AsyncSession = D
     ]
 
 
+def _serialize_workspace(ws: Workspace) -> dict:
+    return {
+        "id": ws.id,
+        "name": ws.name,
+        "description": ws.description,
+        "owner_id": ws.owner_id,
+        "created_at": ws.created_at,
+        "is_active": ws.is_active,
+        "members": [
+            {
+                "id": m.id,
+                "workspace_id": m.workspace_id,
+                "user_id": m.user_id,
+                "username": m.user.username if m.user else "",
+                "email": m.user.email if m.user else "",
+                "role": m.role,
+                "joined_at": m.joined_at,
+            }
+            for m in ws.members
+        ],
+    }
+
+
 # ── WORKSPACES ────────────────────────────────────────────────────────────────
 
 @router.get("/workspaces", response_model=list[WorkspaceOut])
 async def list_workspaces(db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
-    # Return workspaces where user is owner or member
-    owned = (await db.execute(select(Workspace).options(selectinload(Workspace.members)).where(Workspace.owner_id == current_user.id))).scalars().all()
+    owned = (await db.execute(select(Workspace).options(selectinload(Workspace.members).selectinload(WorkspaceMember.user)).where(Workspace.owner_id == current_user.id))).scalars().all()
     member_ws_ids = (await db.execute(select(WorkspaceMember.workspace_id).where(WorkspaceMember.user_id == current_user.id))).scalars().all()
     member_ws = []
     if member_ws_ids:
-        member_ws = (await db.execute(select(Workspace).options(selectinload(Workspace.members)).where(Workspace.id.in_(member_ws_ids)))).scalars().all()
+        member_ws = (await db.execute(select(Workspace).options(selectinload(Workspace.members).selectinload(WorkspaceMember.user)).where(Workspace.id.in_(member_ws_ids)))).scalars().all()
     seen = {w.id for w in owned}
-    return owned + [w for w in member_ws if w.id not in seen]
+    all_ws = owned + [w for w in member_ws if w.id not in seen]
+    return [_serialize_workspace(w) for w in all_ws]
 
 
 @router.post("/workspaces", response_model=WorkspaceOut, status_code=status.HTTP_201_CREATED)
@@ -280,8 +303,8 @@ async def create_workspace(data: WorkspaceCreate, db: AsyncSession = Depends(get
     await db.flush()
     db.add(WorkspaceMember(id=uuid.uuid4(), workspace_id=ws.id, user_id=current_user.id, role="owner", joined_at=utcnow()))
     await db.commit()
-    await db.refresh(ws)
-    return ws
+    result = await db.execute(select(Workspace).options(selectinload(Workspace.members).selectinload(WorkspaceMember.user)).where(Workspace.id == ws.id))
+    return _serialize_workspace(result.scalar_one())
 
 
 @router.post("/workspaces/{ws_id}/members", response_model=WorkspaceMemberOut, status_code=status.HTTP_201_CREATED)
@@ -299,8 +322,15 @@ async def add_member(ws_id: uuid.UUID, payload: dict, db: AsyncSession = Depends
     member = WorkspaceMember(id=uuid.uuid4(), workspace_id=ws_id, user_id=target.id, role="member", joined_at=utcnow())
     db.add(member)
     await db.commit()
-    await db.refresh(member)
-    return member
+    return {
+        "id": member.id,
+        "workspace_id": member.workspace_id,
+        "user_id": member.user_id,
+        "username": target.username,
+        "email": target.email,
+        "role": member.role,
+        "joined_at": member.joined_at,
+    }
 
 
 @router.delete("/workspaces/{ws_id}/members/{user_id}", status_code=status.HTTP_204_NO_CONTENT)

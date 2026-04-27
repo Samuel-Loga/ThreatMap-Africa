@@ -137,13 +137,14 @@ function WorkspaceDetail({ ws, onBack, currentUser }) {
           {members.map(m => (
             <div key={m.id} className="bg-dark-800 border border-dark-600 rounded-lg px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
-                  {m.role === 'owner' ? '👑' : '👤'}
+                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">
+                  {m.role === 'owner' ? '👑' : (m.username?.[0] || '👤').toUpperCase()}
                 </div>
                 <div>
-                  <span className="text-sm text-gray-200">{m.user_id}</span>
-                  <span className={`ml-2 text-[10px] px-1.5 py-0.5 rounded uppercase font-bold ${m.role === 'owner' ? 'bg-primary/20 text-primary' : 'bg-dark-700 text-gray-400'}`}>{m.role}</span>
+                  <p className="text-sm font-semibold text-gray-200">{m.username || m.user_id}</p>
+                  <p className="text-[10px] text-gray-500">{m.email}</p>
                 </div>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-bold ${m.role === 'owner' ? 'bg-primary/20 text-primary' : 'bg-dark-700 text-gray-400'}`}>{m.role}</span>
               </div>
               {isOwner && m.role !== 'owner' && (
                 <button onClick={() => removeMember(m.user_id)} className="text-[10px] text-red-400 hover:text-red-300">Remove</button>

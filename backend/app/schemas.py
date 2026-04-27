@@ -369,6 +369,8 @@ class WorkspaceMemberOut(BaseModel):
     id: uuid.UUID
     workspace_id: uuid.UUID
     user_id: uuid.UUID
+    username: str = ""
+    email: str = ""
     role: str
     joined_at: datetime
     model_config = {"from_attributes": True}

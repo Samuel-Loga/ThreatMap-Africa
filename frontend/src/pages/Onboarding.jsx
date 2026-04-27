@@ -4,12 +4,12 @@ import { authApi } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 
 const STEPS = [
-  { id: 'org', title: 'Organization', description: 'Institutional context' },
-  { id: 'role', title: 'Role & Expertise', description: 'Personal expertise' },
-  { id: 'notifs', title: 'Notifications', description: 'Alert preferences' },
-  { id: 'identity', title: 'Identity', description: 'Profile enrichment (Optional)' },
-  { id: 'security', title: 'Security', description: 'Account safety' },
-  { id: 'location', title: 'Location', description: 'Regional context' },
+  { id: 'org', title: 'Organization', description: 'Institutional context', mandatory: true },
+  { id: 'role', title: 'Role & Expertise', description: 'Personal expertise', mandatory: true },
+  { id: 'notifs', title: 'Notifications', description: 'Alert preferences', mandatory: false },
+  { id: 'identity', title: 'Identity', description: 'Profile enrichment (Optional)', mandatory: false },
+  { id: 'security', title: 'Security', description: 'Account safety', mandatory: false },
+  { id: 'location', title: 'Location', description: 'Regional context', mandatory: true },
 ]
 
 export default function Onboarding() {
@@ -17,6 +17,7 @@ export default function Onboarding() {
   const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [formData, setFormData] = useState({
     organization: '',
     org_type: '',
@@ -68,7 +69,31 @@ export default function Onboarding() {
     loadProfile()
   }, [])
 
+  const validateStep = () => {
+    const step = STEPS[currentStep]
+    if (!step.mandatory) return true
+
+    if (step.id === 'org') {
+      if (!formData.organization.trim()) return 'Organization name is required'
+      if (!formData.org_type) return 'Organization type is required'
+    }
+    if (step.id === 'role') {
+      if (!formData.experience_level) return 'Primary role is required'
+    }
+    if (step.id === 'location') {
+      if (!formData.region_state.trim()) return 'Region/State is required'
+      if (!formData.city.trim()) return 'City is required'
+    }
+    return true
+  }
+
   const handleNext = async () => {
+    const validation = validateStep()
+    if (validation !== true) {
+      setError(validation)
+      return
+    }
+    setError('')
     setLoading(true)
     try {
       // Save progress
@@ -114,12 +139,15 @@ export default function Onboarding() {
       }
     } catch (err) {
       console.error('Failed to save onboarding progress', err)
+      setError('Failed to save progress. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
   const handleSkip = () => {
+    if (STEPS[currentStep].mandatory) return
+    setError('')
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(prev => prev + 1)
     } else {
@@ -128,10 +156,12 @@ export default function Onboarding() {
   }
 
   const updateField = (field, value) => {
+    setError('')
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
   const toggleInterest = (interest) => {
+    setError('')
     setFormData(prev => ({
       ...prev,
       interests: prev.interests.includes(interest)
@@ -165,28 +195,38 @@ export default function Onboarding() {
 
       <div className="bg-dark-800 border border-dark-600 rounded-xl p-8 shadow-xl">
         <div className="mb-8">
-          <h2 className="text-xl font-bold text-white">{step.title}</h2>
+          <h2 className="text-xl font-bold text-white">
+            {step.title} {step.mandatory && <span className="text-primary text-xs uppercase ml-2 tracking-widest">(Required)</span>}
+          </h2>
           <p className="text-gray-400 text-sm">{step.description}</p>
         </div>
+
+        {error && (
+          <div className="mb-6 p-3 bg-red-500/10 border border-red-500/50 rounded text-red-500 text-sm">
+            {error}
+          </div>
+        )}
 
         {step.id === 'org' && (
           <div className="space-y-6">
             <div>
-              <label className={labelClass}>Organization Name</label>
+              <label className={labelClass}>Organization Name *</label>
               <input 
                 type="text" 
                 className={inputClass} 
                 value={formData.organization}
                 onChange={(e) => updateField('organization', e.target.value)}
                 placeholder="e.g. National Cyber Security Centre"
+                required
               />
             </div>
             <div>
-              <label className={labelClass}>Organization Type</label>
+              <label className={labelClass}>Organization Type *</label>
               <select 
                 className={inputClass}
                 value={formData.org_type}
                 onChange={(e) => updateField('org_type', e.target.value)}
+                required
               >
                 <option value="">Select type...</option>
                 <option value="Government">Government</option>
@@ -213,11 +253,12 @@ export default function Onboarding() {
         {step.id === 'role' && (
           <div className="space-y-6">
             <div>
-              <label className={labelClass}>Primary Role</label>
+              <label className={labelClass}>Primary Role *</label>
               <select 
                 className={inputClass}
                 value={formData.experience_level}
                 onChange={(e) => updateField('experience_level', e.target.value)}
+                required
               >
                 <option value="">Select role...</option>
                 <option value="Analyst">Security Analyst</option>
@@ -367,23 +408,25 @@ export default function Onboarding() {
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}>Region / State</label>
+                <label className={labelClass}>Region / State *</label>
                 <input 
                   type="text" 
                   className={inputClass} 
                   value={formData.region_state}
                   onChange={(e) => updateField('region_state', e.target.value)}
                   placeholder="e.g. Nairobi County"
+                  required
                 />
               </div>
               <div>
-                <label className={labelClass}>City</label>
+                <label className={labelClass}>City *</label>
                 <input 
                   type="text" 
                   className={inputClass} 
                   value={formData.city}
                   onChange={(e) => updateField('city', e.target.value)}
                   placeholder="e.g. Nairobi"
+                  required
                 />
               </div>
             </div>
@@ -391,13 +434,17 @@ export default function Onboarding() {
         )}
 
         <div className="mt-12 flex items-center justify-between gap-4">
-          <button
-            onClick={handleSkip}
-            disabled={loading}
-            className="px-6 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-300 transition-colors"
-          >
-            {currentStep === STEPS.length - 1 ? 'Finish Later' : 'Skip Step'}
-          </button>
+          {!step.mandatory ? (
+            <button
+              onClick={handleSkip}
+              disabled={loading}
+              className="px-6 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-300 transition-colors"
+            >
+              {currentStep === STEPS.length - 1 ? 'Finish Later' : 'Skip Step'}
+            </button>
+          ) : (
+            <div />
+          )}
           <button
             onClick={handleNext}
             disabled={loading}

@@ -37,10 +37,13 @@ export function NotificationProvider({ children }) {
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data)
-        // Enrichment complete is a candidate for a real-time notification
-        if (data.event === 'enrichment_complete') {
-          // We can either fetch again or manually add it if the backend also saved it
-          // For now, let's just refresh to stay in sync with the DB
+        // Enrichment complete or new notification are candidates for a real-time notification
+        if (data.event === 'enrichment_complete' || data.event === 'new_notification') {
+          // If it's a notification for a specific user, we could check if it matches current user
+          // but fetchNotifications already checks for user context.
+          if (data.user_id && user && data.user_id !== String(user.id)) {
+            return // Not for us
+          }
           fetchNotifications()
         }
       } catch (err) {

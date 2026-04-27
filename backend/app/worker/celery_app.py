@@ -19,6 +19,10 @@ celery_app.conf.beat_schedule = {
         "task": "send_weekly_summary",
         "schedule": crontab(day_of_week=1, hour=9, minute=0), # Weekly on Monday at 9 AM UTC
     },
+    "remind-incomplete-profiles-task": {
+        "task": "remind_incomplete_profiles",
+        "schedule": crontab(hour=10, minute=0), # Daily at 10 AM UTC
+    },
 }
 
 celery_app.conf.update(

@@ -4,7 +4,7 @@ import logging
 import base64
 from datetime import datetime, timezone
 import httpx
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from app.worker.celery_app import celery_app
 from app.database import SyncSessionLocal
 from app.models import Indicator, EnrichmentResult
@@ -208,6 +208,19 @@ def broadcast_ws_event(indicator_id: str, status: str, enrichment_data: dict):
         logger.warning(f"WebSocket broadcast error: {e}")
 
 
+def broadcast_ws_notification(user_id: str):
+    try:
+        import redis as redis_lib
+        r = redis_lib.from_url(settings.REDIS_URL)
+        message = json.dumps({
+            "event": "new_notification",
+            "user_id": user_id,
+        })
+        r.publish("enrichment_events", message) # Using same channel for simplicity
+    except Exception as e:
+        logger.warning(f"WebSocket notification broadcast error: {e}")
+
+
 @celery_app.task(name="send_instant_notifications")
 def send_instant_notifications(indicator_id: str):
     process_instant_notifications(indicator_id)
@@ -226,6 +239,43 @@ def send_weekly_summary():
 @celery_app.task(name="calculate_user_reputation")
 def calculate_user_reputation(user_id: str):
     update_user_reputation(user_id)
+
+
+@celery_app.task(name="remind_incomplete_profiles")
+def remind_incomplete_profiles():
+    with SyncSessionLocal() as db:
+        from app.models import User, Notification
+        
+        # Find active users
+        users = db.execute(select(User).where(User.is_active == True)).scalars().all()
+        
+        for user in users:
+            missing_info = []
+            if not user.full_name: missing_info.append("Full Name")
+            if not user.pgp_key: missing_info.append("PGP Public Key")
+            if not user.two_factor_enabled: missing_info.append("Two-Factor Auth")
+            
+            if missing_info:
+                # Check if there is already an unread profile reminder
+                existing_reminder = db.execute(select(Notification).where(
+                    and_(
+                        Notification.user_id == user.id,
+                        Notification.is_read == False,
+                        Notification.title == "Complete Your Profile Enrichment"
+                    )
+                )).scalar_one_or_none()
+                
+                if not existing_reminder:
+                    message = f"Hi {user.username}, your profile is missing some optional but helpful information: {', '.join(missing_info)}. Completing your profile helps establish trust."
+                    db.add(Notification(
+                        user_id=user.id,
+                        title="Complete Your Profile Enrichment",
+                        message=message,
+                        link="/onboarding"
+                    ))
+                    db.commit() # Commit each to ensure we can broadcast
+                    broadcast_ws_notification(str(user.id))
+        db.commit()
 
 
 @celery_app.task(name="enrich_indicator", bind=True, max_retries=2)

@@ -31,12 +31,6 @@ services:
       REDIS_URL: redis://redis:6379/0
       SECRET_KEY: ${SECRET_KEY:-changeme-super-secret-key-at-least-32-chars}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost}
-      ABUSEIPDB_API_KEY: ${ABUSEIPDB_API_KEY:-}
-      VIRUSTOTAL_API_KEY: ${VIRUSTOTAL_API_KEY:-}
-      SUPABASE_URL: ${SUPABASE_URL:-}
-      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
-      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
-      SUPABASE_STORAGE_BUCKET: ${SUPABASE_STORAGE_BUCKET:-threatmap}
     depends_on:
       db:
         condition: service_healthy
@@ -53,17 +47,6 @@ services:
 
   worker:
     build: ./backend
-    environment:
-      DATABASE_URL: postgresql+asyncpg://threatmap:${POSTGRES_PASSWORD:-threatmap}@db:5432/threatmap
-      SYNC_DATABASE_URL: postgresql+psycopg2://threatmap:${POSTGRES_PASSWORD:-threatmap}@db:5432/threatmap
-      REDIS_URL: redis://redis:6379/0
-      SECRET_KEY: ${SECRET_KEY:-changeme-super-secret-key-at-least-32-chars}
-      ABUSEIPDB_API_KEY: ${ABUSEIPDB_API_KEY:-}
-      VIRUSTOTAL_API_KEY: ${VIRUSTOTAL_API_KEY:-}
-      SUPABASE_URL: ${SUPABASE_URL:-}
-      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
-      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
-      SUPABASE_STORAGE_BUCKET: ${SUPABASE_STORAGE_BUCKET:-threatmap}
     depends_on:
       db:
         condition: service_healthy
@@ -75,15 +58,6 @@ services:
 
   beat:
     build: ./backend
-    environment:
-      DATABASE_URL: postgresql+asyncpg://threatmap:${POSTGRES_PASSWORD:-threatmap}@db:5432/threatmap
-      SYNC_DATABASE_URL: postgresql+psycopg2://threatmap:${POSTGRES_PASSWORD:-threatmap}@db:5432/threatmap
-      REDIS_URL: redis://redis:6379/0
-      SECRET_KEY: ${SECRET_KEY:-changeme-super-secret-key-at-least-32-chars}
-      SUPABASE_URL: ${SUPABASE_URL:-}
-      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
-      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
-      SUPABASE_STORAGE_BUCKET: ${SUPABASE_STORAGE_BUCKET:-threatmap}
     depends_on:
       db:
         condition: service_healthy
@@ -99,9 +73,7 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    ports:
-      - "5173:5173"
-    command: sh -c "npm install && npm run dev -- --host"
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
 
   nginx:
     image: nginx:1.25-alpine

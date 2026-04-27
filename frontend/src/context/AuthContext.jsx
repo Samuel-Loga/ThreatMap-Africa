@@ -9,7 +9,7 @@ function parseToken(token) {
     id: payload.sub,
     role: payload.role,
     username: payload.username,
-    onboarding_completed: payload.onboarding_completed ?? false,
+    onboarding_completed: payload.onboarding_completed === true || payload.onboarding_completed === 'true',
   }
 }
 

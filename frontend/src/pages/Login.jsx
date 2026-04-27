@@ -27,7 +27,11 @@ export default function Login() {
         setPreAuthToken(result.pre_auth_token)
         setRequires2fa(true)
       } else {
-        navigate('/dashboard')
+        if (result && !result.onboarding_completed) {
+          navigate('/onboarding')
+        } else {
+          navigate('/dashboard')
+        }
       }
     } catch (err) {
       setError(err.response?.data?.detail || 'Login failed')
@@ -41,8 +45,12 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      await finalizeLogin(preAuthToken, totpCode)
-      navigate('/dashboard')
+      const result = await finalizeLogin(preAuthToken, totpCode)
+      if (result && !result.onboarding_completed) {
+        navigate('/onboarding')
+      } else {
+        navigate('/dashboard')
+      }
     } catch (err) {
       setError(err.response?.data?.detail || 'Invalid 2FA code')
     } finally {

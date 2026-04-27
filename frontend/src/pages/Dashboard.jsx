@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { indicatorsApi } from '../api/client'
 import AfricaMap from '../components/AfricaMap'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { 
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, 
+  PieChart, Pie, Legend
+} from 'recharts'
 
 const TYPE_ICONS = {
   ip: '🖥️',
@@ -19,6 +22,23 @@ const SEVERITY_COLORS = {
   Medium: 'text-yellow-400',
   High: 'text-orange-400',
   Critical: 'text-red-500',
+}
+
+const SEVERITY_MAP_COLORS = {
+  Info: '#3b82f6',
+  Low: '#22c55e',
+  Medium: '#eab308',
+  High: '#f97316',
+  Critical: '#ef4444',
+}
+
+const TYPE_COLORS = {
+  ip: '#06b6d4',      // Cyan
+  domain: '#3b82f6',  // Blue
+  url: '#8b5cf6',     // Violet
+  hash_md5: '#ec4899', // Pink
+  hash_sha256: '#d946ef', // Fuchsia
+  email: '#10b981',    // Emerald
 }
 
 function StatCard({ label, value, sub, color = 'text-primary' }) {
@@ -96,6 +116,13 @@ export default function Dashboard() {
   const countryCounts = {}
   const categoryCounts = {}
   const typeCounts = {}
+  const severityCounts = {
+    Critical: 0,
+    High: 0,
+    Medium: 0,
+    Low: 0,
+    Info: 0
+  }
 
   const AFRICAN_COUNTRY_CODES = [
     "NG","KE","ZA","GH","ET","TZ","EG","MA","SN","RW",
@@ -114,6 +141,9 @@ export default function Dashboard() {
     })
     ;(ind.attack_categories || []).forEach((a) => { categoryCounts[a] = (categoryCounts[a] || 0) + 1 })
     typeCounts[ind.indicator_type] = (typeCounts[ind.indicator_type] || 0) + 1
+    if (severityCounts.hasOwnProperty(ind.severity)) {
+      severityCounts[ind.severity] += 1
+    }
   })
 
   const topCountryCode = Object.entries(countryCounts).sort((a, b) => b[1] - a[1])[0]
@@ -134,7 +164,15 @@ export default function Dashboard() {
     .map(([name, count]) => ({ name: toTitleCase(name), count }))
 
   const typeChartData = Object.entries(typeCounts)
-    .map(([name, count]) => ({ name: toTitleCase(name), count }))
+    .map(([name, count]) => ({ 
+      name: toTitleCase(name), 
+      count,
+      rawType: name 
+    }))
+
+  const severityChartData = Object.entries(severityCounts)
+    .filter(([_, count]) => count > 0)
+    .map(([name, count]) => ({ name, count }))
 
   const recentIndicators = indicators.filter((ind) => {
     const created = new Date(ind.created_at)
@@ -142,9 +180,9 @@ export default function Dashboard() {
     if (recentFilter === 'week') return created >= oneWeekAgo
     if (recentFilter === 'month') return created >= oneMonthAgo
     return true
-  }).slice(0, 15) // Increased limit but enabled scroll
+  }).slice(0, 15)
 
-  const COLORS = ['#10b981', '#f97316', '#3b82f6', '#a855f7', '#ec4899', '#eab308']
+  const CATEGORY_COLORS = ['#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e']
 
   if (loading) {
     return (
@@ -228,34 +266,88 @@ export default function Dashboard() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-dark-800 border border-dark-600 rounded-lg p-4">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wide">Attack Categories</h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={categoryChartData} layout="vertical">
-              <XAxis type="number" tick={{ fill: '#94a3b8', fontSize: 11 }} />
-              <YAxis type="category" dataKey="name" tick={{ fill: '#94a3b8', fontSize: 10 }} width={130} />
-              <Tooltip
-                contentStyle={{ background: '#1e293b', border: '1px solid #334155', color: '#e2e8f0' }}
-              />
-              <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                {categoryChartData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {/* Indicator Types - Doughnut */}
+        <div className="bg-dark-800 border border-dark-600 rounded-lg p-4 flex flex-col">
+          <h2 className="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wide">Indicator Types</h2>
+          <div className="flex-1">
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={typeChartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="count"
+                >
+                  {typeChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={TYPE_COLORS[entry.rawType] || CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px' }}
+                  itemStyle={{ fontSize: '12px' }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
-        <div className="bg-dark-800 border border-dark-600 rounded-lg p-4">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wide">Indicator Types</h2>
+        {/* Severity Distribution - Doughnut */}
+        <div className="bg-dark-800 border border-dark-600 rounded-lg p-4 flex flex-col">
+          <h2 className="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wide">Severity Distribution</h2>
+          <div className="flex-1">
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={severityChartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="count"
+                >
+                  {severityChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={SEVERITY_MAP_COLORS[entry.name] || '#64748b'} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px' }}
+                  itemStyle={{ fontSize: '12px' }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Attack Categories - Horizontal Bar */}
+        <div className="bg-dark-800 border border-dark-600 rounded-lg p-4 md:col-span-2 xl:col-span-1">
+          <h2 className="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wide">Top Attack Categories</h2>
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={typeChartData}>
-              <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 11 }} />
-              <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} />
-              <Tooltip
-                contentStyle={{ background: '#1e293b', border: '1px solid #334155', color: '#e2e8f0' }}
+            <BarChart data={categoryChartData} layout="vertical" margin={{ left: 20, right: 20 }}>
+              <XAxis type="number" hide />
+              <YAxis 
+                type="category" 
+                dataKey="name" 
+                tick={{ fill: '#94a3b8', fontSize: 10 }} 
+                width={120}
+                axisLine={false}
+                tickLine={false}
               />
-              <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                {typeChartData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+              <Tooltip
+                cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px' }}
+                itemStyle={{ fontSize: '12px' }}
+              />
+              <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={20}>
+                {categoryChartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
+                ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>

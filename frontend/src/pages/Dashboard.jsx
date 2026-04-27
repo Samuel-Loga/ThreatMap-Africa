@@ -97,8 +97,21 @@ export default function Dashboard() {
   const categoryCounts = {}
   const typeCounts = {}
 
+  const AFRICAN_COUNTRY_CODES = [
+    "NG","KE","ZA","GH","ET","TZ","EG","MA","SN","RW",
+    "CM","UG","ZM","CI","DZ","AO","BF","BI","BJ","BW",
+    "CD","CF","CG","CV","DJ","ER","GA","GM","GN","GQ",
+    "GW","KM","LR","LS","LY","MG","ML","MR","MU","MW",
+    "MZ","NA","NE","SC","SD","SL","SO","SS","ST","SZ",
+    "TD","TG","TN","ZW",
+  ]
+
   indicators.forEach((ind) => {
-    (ind.country_codes || []).forEach((cc) => { countryCounts[cc] = (countryCounts[cc] || 0) + 1 })
+    (ind.country_codes || []).forEach((cc) => {
+      if (AFRICAN_COUNTRY_CODES.includes(cc)) {
+        countryCounts[cc] = (countryCounts[cc] || 0) + 1
+      }
+    })
     ;(ind.attack_categories || []).forEach((a) => { categoryCounts[a] = (categoryCounts[a] || 0) + 1 })
     typeCounts[ind.indicator_type] = (typeCounts[ind.indicator_type] || 0) + 1
   })

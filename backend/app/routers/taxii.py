@@ -18,7 +18,7 @@ async def taxii_discovery():
         content={
             "title": "ThreatMap Africa TAXII Server",
             "description": "TAXII 2.1 server for African threat intelligence",
-            "contact": "admin@threatmap.africa",
+            "contact": "samuelloga9@gmail.com",
             "default": f"/taxii/collections/{COLLECTION_ID}/",
             "api_roots": ["/taxii/"],
         },

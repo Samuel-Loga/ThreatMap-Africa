@@ -35,7 +35,9 @@ export default function AfricaMap({ indicators = [] }) {
   const countryCounts = {}
   indicators.forEach((ind) => {
     (ind.country_codes || []).forEach((cc) => {
-      countryCounts[cc] = (countryCounts[cc] || 0) + 1
+      if (COUNTRY_COORDS[cc]) {
+        countryCounts[cc] = (countryCounts[cc] || 0) + 1
+      }
     })
   })
 
@@ -45,6 +47,10 @@ export default function AfricaMap({ indicators = [] }) {
     <MapContainer
       center={[2, 20]}
       zoom={3}
+      minZoom={3}
+      maxZoom={8}
+      maxBounds={[[-38, -25], [40, 60]]}
+      maxBoundsViscosity={1.0}
       style={{ height: '400px', width: '100%', borderRadius: '8px' }}
       zoomControl={true}
     >

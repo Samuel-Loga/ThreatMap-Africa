@@ -4,12 +4,12 @@ import { authApi } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 
 const STEPS = [
-  { id: 'org', title: 'Organization', description: 'Institutional context' },
-  { id: 'role', title: 'Role & Expertise', description: 'Personal expertise' },
-  { id: 'notifs', title: 'Notifications', description: 'Alert preferences' },
-  { id: 'identity', title: 'Identity', description: 'Profile enrichment (Optional)' },
-  { id: 'security', title: 'Security', description: 'Account safety' },
-  { id: 'location', title: 'Location', description: 'Regional context' },
+  { id: 'org', title: 'Organization', description: 'Institutional context', required: true },
+  { id: 'role', title: 'Role & Expertise', description: 'Your role & areas of interest', required: true },
+  { id: 'notifs', title: 'Notifications', description: 'Alert preferences (Optional)', required: false },
+  { id: 'identity', title: 'Identity', description: 'Profile name (Optional)', required: false },
+  { id: 'security', title: 'Security', description: 'Account safety (Recommended)', required: false },
+  { id: 'location', title: 'Location', description: 'Regional context (Optional)', required: false },
 ]
 
 export default function Onboarding() {
@@ -17,6 +17,7 @@ export default function Onboarding() {
   const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [stepErrors, setStepErrors] = useState({})
   const [formData, setFormData] = useState({
     organization: '',
     org_type: '',
@@ -68,7 +69,26 @@ export default function Onboarding() {
     loadProfile()
   }, [])
 
+  const validateStep = (stepId) => {
+    const errors = {}
+    if (stepId === 'org') {
+      if (!formData.organization.trim()) errors.organization = 'Organization name is required.'
+      if (!formData.org_type) errors.org_type = 'Organization type is required.'
+    }
+    if (stepId === 'role') {
+      if (!formData.experience_level) errors.experience_level = 'Please select your primary role.'
+      if (formData.interests.length === 0) errors.interests = 'Please select at least one area of interest.'
+    }
+    return errors
+  }
+
   const handleNext = async () => {
+    const errors = validateStep(step.id)
+    if (Object.keys(errors).length > 0) {
+      setStepErrors(errors)
+      return
+    }
+    setStepErrors({})
     setLoading(true)
     try {
       // Save progress
@@ -120,6 +140,7 @@ export default function Onboarding() {
   }
 
   const handleSkip = () => {
+    if (step.required) return // cannot skip mandatory steps
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(prev => prev + 1)
     } else {
@@ -129,15 +150,21 @@ export default function Onboarding() {
 
   const updateField = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+    if (stepErrors[field]) {
+      setStepErrors(prev => { const e = { ...prev }; delete e[field]; return e })
+    }
   }
 
   const toggleInterest = (interest) => {
-    setFormData(prev => ({
-      ...prev,
-      interests: prev.interests.includes(interest)
+    setFormData(prev => {
+      const next = prev.interests.includes(interest)
         ? prev.interests.filter(i => i !== interest)
         : [...prev.interests, interest]
-    }))
+      if (next.length > 0 && stepErrors.interests) {
+        setStepErrors(e => { const n = { ...e }; delete n.interests; return n })
+      }
+      return { ...prev, interests: next }
+    })
   }
 
   const step = STEPS[currentStep]
@@ -165,26 +192,32 @@ export default function Onboarding() {
 
       <div className="bg-dark-800 border border-dark-600 rounded-xl p-8 shadow-xl">
         <div className="mb-8">
-          <h2 className="text-xl font-bold text-white">{step.title}</h2>
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            {step.title}
+            {step.required && (
+              <span className="text-xs font-medium bg-primary/10 text-primary border border-primary/30 rounded px-2 py-0.5">Required</span>
+            )}
+          </h2>
           <p className="text-gray-400 text-sm">{step.description}</p>
         </div>
 
         {step.id === 'org' && (
           <div className="space-y-6">
             <div>
-              <label className={labelClass}>Organization Name</label>
+              <label className={labelClass}>Organization Name <span className="text-red-500">*</span></label>
               <input 
                 type="text" 
-                className={inputClass} 
+                className={`${inputClass} ${stepErrors.organization ? 'border-red-500' : ''}`}
                 value={formData.organization}
                 onChange={(e) => updateField('organization', e.target.value)}
                 placeholder="e.g. National Cyber Security Centre"
               />
+              {stepErrors.organization && <p className="text-red-400 text-xs mt-1">{stepErrors.organization}</p>}
             </div>
             <div>
-              <label className={labelClass}>Organization Type</label>
+              <label className={labelClass}>Organization Type <span className="text-red-500">*</span></label>
               <select 
-                className={inputClass}
+                className={`${inputClass} ${stepErrors.org_type ? 'border-red-500' : ''}`}
                 value={formData.org_type}
                 onChange={(e) => updateField('org_type', e.target.value)}
               >
@@ -196,6 +229,7 @@ export default function Onboarding() {
                 <option value="NGO">NGO</option>
                 <option value="Other">Other</option>
               </select>
+              {stepErrors.org_type && <p className="text-red-400 text-xs mt-1">{stepErrors.org_type}</p>}
             </div>
             <div>
               <label className={labelClass}>Department</label>
@@ -213,9 +247,9 @@ export default function Onboarding() {
         {step.id === 'role' && (
           <div className="space-y-6">
             <div>
-              <label className={labelClass}>Primary Role</label>
+              <label className={labelClass}>Primary Role <span className="text-red-500">*</span></label>
               <select 
-                className={inputClass}
+                className={`${inputClass} ${stepErrors.experience_level ? 'border-red-500' : ''}`}
                 value={formData.experience_level}
                 onChange={(e) => updateField('experience_level', e.target.value)}
               >
@@ -227,9 +261,10 @@ export default function Onboarding() {
                 <option value="Manager">Manager / CISO</option>
                 <option value="Other">Other</option>
               </select>
+              {stepErrors.experience_level && <p className="text-red-400 text-xs mt-1">{stepErrors.experience_level}</p>}
             </div>
             <div>
-              <label className={labelClass}>Areas of Interest</label>
+              <label className={labelClass}>Areas of Interest <span className="text-red-500">*</span> <span className="text-gray-500 font-normal">(select at least one)</span></label>
               <div className="flex flex-wrap gap-2 mt-2">
                 {['Phishing', 'Malware', 'DDoS', 'Ransomware', 'Social Engineering', 'APT', 'Cloud Security'].map(interest => (
                   <button
@@ -246,6 +281,7 @@ export default function Onboarding() {
                   </button>
                 ))}
               </div>
+              {stepErrors.interests && <p className="text-red-400 text-xs mt-2">{stepErrors.interests}</p>}
             </div>
           </div>
         )}
@@ -391,17 +427,21 @@ export default function Onboarding() {
         )}
 
         <div className="mt-12 flex items-center justify-between gap-4">
-          <button
-            onClick={handleSkip}
-            disabled={loading}
-            className="px-6 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-300 transition-colors"
-          >
-            {currentStep === STEPS.length - 1 ? 'Finish Later' : 'Skip Step'}
-          </button>
+          {step.required ? (
+            <span className="text-xs text-gray-600 italic">All fields marked <span className="text-red-500">*</span> are required</span>
+          ) : (
+            <button
+              onClick={handleSkip}
+              disabled={loading}
+              className="px-6 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-300 transition-colors"
+            >
+              {currentStep === STEPS.length - 1 ? 'Finish Later' : 'Skip Step'}
+            </button>
+          )}
           <button
             onClick={handleNext}
             disabled={loading}
-          className="px-8 py-2.5 bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-bold rounded-lg transition-all shadow-lg shadow-primary/20"
+            className="px-8 py-2.5 bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-bold rounded-lg transition-all shadow-lg shadow-primary/20"
           >
             {loading ? 'Saving...' : currentStep === STEPS.length - 1 ? 'Complete Onboarding' : 'Save & Continue'}
           </button>

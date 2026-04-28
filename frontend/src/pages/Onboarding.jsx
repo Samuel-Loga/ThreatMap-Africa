@@ -151,7 +151,7 @@ export default function Onboarding() {
   const updateField = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     if (stepErrors[field]) {
-      setStepErrors(prev => { const e = { ...prev }; delete e[field]; return e })
+      setStepErrors(prev => { const updatedErrors = { ...prev }; delete updatedErrors[field]; return updatedErrors })
     }
   }
 
@@ -161,7 +161,7 @@ export default function Onboarding() {
         ? prev.interests.filter(i => i !== interest)
         : [...prev.interests, interest]
       if (next.length > 0 && stepErrors.interests) {
-        setStepErrors(e => { const n = { ...e }; delete n.interests; return n })
+        setStepErrors(prevErrors => { const newErrors = { ...prevErrors }; delete newErrors.interests; return newErrors })
       }
       return { ...prev, interests: next }
     })

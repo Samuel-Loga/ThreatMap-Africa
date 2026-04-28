@@ -38,4 +38,7 @@ Thumbs.db
 # Build artifacts
 frontend/dist/
 
-GEMINI*
+GEMINI.md
+backend/celerybeat-schedule
+.env
+.env.example

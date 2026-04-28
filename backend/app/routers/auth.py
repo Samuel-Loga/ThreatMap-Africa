@@ -1,4 +1,5 @@
 import io
+import uuid
 import base64
 import pyotp
 import qrcode
@@ -83,7 +84,7 @@ async def verify_2fa_login(payload: dict, db: AsyncSession = Depends(get_db)):
     if not decoded or decoded.get("type") != "pre_auth":
         raise HTTPException(status_code=401, detail="Invalid or expired 2FA session")
 
-    result = await db.execute(select(User).where(User.id == decoded["sub"]))
+    result = await db.execute(select(User).where(User.id == uuid.UUID(decoded["sub"])))
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")

@@ -288,7 +288,7 @@ export default function Dashboard() {
                 </Pie>
                 <Tooltip 
                   contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px' }}
-                  itemStyle={{ fontSize: '12px' }}
+                  itemStyle={{ fontSize: '12px', color: '#e0e0e0' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
               </PieChart>
@@ -317,7 +317,7 @@ export default function Dashboard() {
                 </Pie>
                 <Tooltip 
                   contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px' }}
-                  itemStyle={{ fontSize: '12px' }}
+                  itemStyle={{ fontSize: '12px', color: '#e0e0e0'}}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
               </PieChart>

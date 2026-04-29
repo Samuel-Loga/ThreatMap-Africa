@@ -38,7 +38,7 @@ export default function Sidebar() {
   return (
     <aside
       className={`bg-dark-800 border-r border-dark-600 transition-all duration-300 flex flex-col sticky top-[57px] h-[calc(100vh-57px)] z-40 flex-shrink-0 ${
-        isExpanded ? 'w-52' : 'w-16'
+        isExpanded ? 'w-48' : 'w-16'
       }`}
     >
       <div className="flex-1 py-4 overflow-y-auto overflow-x-hidden">

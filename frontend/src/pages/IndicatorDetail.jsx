@@ -263,10 +263,10 @@ export default function IndicatorDetail() {
           </div>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0 pt-4 lg:pt-0 border-t lg:border-t-0 border-dark-700">
-          <div className="text-right mr-3 hidden md:block">
-            <p className="text-[10px] text-gray-500 uppercase font-bold">Status</p>
+          {/** <div className="text-right mr-3 hidden md:block">
+            <p className="text-xs text-gray-500 uppercase font-bold">Status</p>
             <p className="text-sm text-gray-200 capitalize font-medium">{indicator.status}</p>
-          </div>
+          </div> */}
           <span className={`text-xs px-3 py-1.5 rounded-full font-bold tracking-tight ${TLP_COLORS[indicator.tlp] || 'bg-dark-600 text-gray-300'}`}>
             TLP:{indicator.tlp}
           </span>
@@ -283,7 +283,7 @@ export default function IndicatorDetail() {
             <div className="space-y-6">
               {indicator.description && (
                 <div>
-                  <p className="text-[10px] text-gray-500 uppercase font-bold mb-2 tracking-wider">Description</p>
+                  <p className="text-xs text-gray-500 uppercase font-bold mb-2 tracking-wider">Description</p>
                   <p className="text-sm text-gray-300 leading-relaxed italic border-l-2 border-primary/30 pl-4 py-1">
                     "{indicator.description}"
                   </p>
@@ -291,7 +291,7 @@ export default function IndicatorDetail() {
               )}
 
               <div className={indicator.description ? "pt-4 border-t border-dark-700/50" : ""}>
-                <p className="text-[10px] text-gray-500 uppercase font-bold mb-2 tracking-wider">Metadata</p>
+                <p className="text-xs text-gray-500 uppercase font-bold mb-2 tracking-wider">Metadata</p>
                 <div className="flex flex-col">
                   <Field label="STIX ID" value={indicator.stix_id} />
                   <Field label="Target Sectors" value={(indicator.sectors || []).join(', ') || 'All Sectors'} />
@@ -301,7 +301,7 @@ export default function IndicatorDetail() {
               </div>
               
               <div className="pt-4 border-t border-dark-700/50">
-                <p className="text-[10px] text-gray-500 uppercase font-bold mb-2 tracking-wider">Timeline</p>
+                <p className="text-xs text-gray-500 uppercase font-bold mb-2 tracking-wider">Timeline</p>
                 <div className="flex flex-col">
                   <Field label="First Observed" value={new Date(indicator.first_seen).toLocaleString()} icon={Clock} />
                   <Field label="Last Observed" value={new Date(indicator.last_seen).toLocaleString()} icon={Clock} />

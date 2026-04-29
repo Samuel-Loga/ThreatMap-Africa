@@ -208,13 +208,13 @@ export default function ThreatFeed() {
         )
       case 'severity':
         return (
-          <span className={`text-[10px] px-1.5 py-0.5 rounded border ${SEVERITY_COLORS[indicator.severity] || 'border-dark-600'}`}>
+          <span className={`text-xs px-1.5 py-0.5 rounded border ${SEVERITY_COLORS[indicator.severity] || 'border-dark-600'}`}>
             {indicator.severity}
           </span>
         )
       case 'tlp':
         return (
-          <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${TLP_COLORS[indicator.tlp] || 'bg-dark-600'}`}>
+          <span className={`text-xs px-1.5 py-0.5 rounded font-semibold ${TLP_COLORS[indicator.tlp] || 'bg-dark-600'}`}>
             {indicator.tlp}
           </span>
         )
@@ -227,28 +227,28 @@ export default function ThreatFeed() {
                 style={{ width: `${indicator.confidence}%` }} 
               />
             </div>
-            <span className="text-[10px] text-gray-400">{indicator.confidence}%</span>
+            <span className="text-xs text-gray-400">{indicator.confidence}%</span>
           </div>
         )
       case 'countries':
         return (
           <div className="flex flex-wrap gap-1 max-w-[150px]">
             {indicator.country_codes.map(cc => (
-              <span key={cc} title={getCountryName(cc)} className="text-[10px] bg-blue-900/30 text-blue-300 border border-blue-800/50 px-1 py-0 rounded">
+              <span key={cc} title={getCountryName(cc)} className="text-xs bg-blue-900/30 text-blue-300 border border-blue-800/50 px-1 py-0 rounded">
                 {cc}
               </span>
             ))}
           </div>
         )
       case 'first_seen':
-        return <span className="text-[10px] text-gray-400 whitespace-nowrap">{new Date(indicator.first_seen).toLocaleDateString()}</span>
+        return <span className="text-xs text-gray-400 whitespace-nowrap">{new Date(indicator.first_seen).toLocaleDateString()}</span>
       case 'last_seen':
-        return <span className="text-[10px] text-gray-400 whitespace-nowrap">{new Date(indicator.last_seen).toLocaleDateString()}</span>
+        return <span className="text-xs text-gray-400 whitespace-nowrap">{new Date(indicator.last_seen).toLocaleDateString()}</span>
       case 'created_at':
-        return <span className="text-[10px] text-gray-400 whitespace-nowrap">{new Date(indicator.created_at).toLocaleString()}</span>
+        return <span className="text-xs text-gray-400 whitespace-nowrap">{new Date(indicator.created_at).toLocaleString()}</span>
       case 'status':
         return (
-          <span className={`text-[10px] px-1.5 py-0.5 rounded ${indicator.status === 'enriched' ? 'bg-green-900 text-green-300' : 'bg-yellow-900 text-yellow-300'}`}>
+          <span className={`text-xs px-1.5 py-0.5 rounded ${indicator.status === 'enriched' ? 'bg-green-900 text-green-300' : 'bg-yellow-900 text-yellow-300'}`}>
             {toTitleCase(indicator.status)}
           </span>
         )
@@ -256,7 +256,7 @@ export default function ThreatFeed() {
         return (
           <div className="flex flex-wrap gap-1">
             {indicator.sectors.map(s => (
-              <span key={s} className="text-[10px] bg-purple-900/30 text-purple-300 border border-purple-800/50 px-1 py-0 rounded">
+              <span key={s} className="text-xs bg-purple-900/30 text-purple-300 border border-purple-800/50 px-1 py-0 rounded">
                 {s}
               </span>
             ))}
@@ -266,14 +266,14 @@ export default function ThreatFeed() {
         return (
           <div className="flex flex-wrap gap-1">
             {indicator.attack_categories.map(a => (
-              <span key={a} className="text-[10px] bg-emerald-900/30 text-emerald-300 border border-emerald-800/50 px-1 py-0 rounded">
+              <span key={a} className="text-xs bg-emerald-900/30 text-emerald-300 border border-emerald-800/50 px-1 py-0 rounded">
                 {a}
               </span>
             ))}
           </div>
         )
       case 'description':
-        return <p className="text-[10px] text-gray-400 italic line-clamp-1 max-w-[200px]" title={indicator.description}>{indicator.description}</p>
+        return <p className="text-xs text-gray-400 italic line-clamp-1 max-w-[200px]" title={indicator.description}>{indicator.description}</p>
       default:
         return null
     }
@@ -343,7 +343,7 @@ export default function ThreatFeed() {
               
               {showColumnSelector && (
                 <div className="absolute right-0 mt-2 w-56 bg-dark-800 border border-dark-600 rounded-lg shadow-xl z-50 p-2 space-y-1">
-                  <p className="text-[10px] text-gray-500 px-2 py-1 font-bold uppercase tracking-wider">Display Columns</p>
+                  <p className="text-xs text-gray-500 px-2 py-1 font-bold uppercase tracking-wider">Display Columns</p>
                   <div className="max-h-64 overflow-y-auto">
                     {ALL_COLUMNS.map(col => (
                       <label key={col.id} className="flex items-center gap-3 px-2 py-1.5 hover:bg-dark-700 rounded cursor-pointer group">
@@ -368,11 +368,11 @@ export default function ThreatFeed() {
                 <thead>
                   <tr className="bg-dark-700/50 border-b border-dark-600">
                     {ALL_COLUMNS.filter(c => visibleColumns.includes(c.id)).map(col => (
-                      <th key={col.id} className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                      <th key={col.id} className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                         {col.label}
                       </th>
                     ))}
-                    <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right">
+                    <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">
                       Actions
                     </th>
                   </tr>

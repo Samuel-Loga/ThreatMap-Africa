@@ -62,18 +62,18 @@ function SlimThreatCard({ indicator }) {
               {indicator.value}
             </p>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className={`text-[10px] font-bold uppercase tracking-wider ${SEVERITY_COLORS[indicator.severity] || 'text-gray-500'}`}>
+              <span className={`text-xs font-bold uppercase tracking-wider ${SEVERITY_COLORS[indicator.severity] || 'text-gray-500'}`}>
                 {indicator.severity}
               </span>
-              <span className="text-[10px] text-gray-500">•</span>
-              <span className="text-[10px] text-gray-500 truncate">
+              <span className="text-xs text-gray-500">•</span>
+              <span className="text-xs text-gray-500 truncate">
                 {new Date(indicator.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
           </div>
         </div>
         <div className="flex-shrink-0 text-right">
-          <span className="text-[10px] bg-dark-600 text-gray-400 px-1.5 py-0.5 rounded uppercase font-bold">
+          <span className="text-xs bg-dark-600 text-gray-400 px-1.5 py-0.5 rounded uppercase font-bold">
             {indicator.indicator_type}
           </span>
         </div>
@@ -235,7 +235,7 @@ export default function Dashboard() {
                 <button
                   key={f}
                   onClick={() => setRecentFilter(f)}
-                  className={`text-[9px] px-2 py-0.5 rounded uppercase font-black transition-colors ${
+                  className={`text-xs px-2 py-0.5 rounded uppercase font-black transition-colors ${
                     recentFilter === f ? 'bg-primary text-white' : 'text-gray-500 hover:text-gray-300'
                   }`}
                 >
@@ -258,7 +258,7 @@ export default function Dashboard() {
           </div>
           
           <div className="mt-4 pt-3 border-t border-dark-700">
-            <Link to="/feed" className="block w-full py-2 text-[10px] text-primary hover:text-primary-hover font-black uppercase tracking-widest transition-colors text-center border border-primary/20 rounded hover:bg-primary/5">
+            <Link to="/feed" className="block w-full py-2 text-xs text-primary hover:text-primary-hover font-black uppercase tracking-widest transition-colors text-center border border-primary/20 rounded hover:bg-primary/5">
               View All in Threat Feed →
             </Link>
           </div>
